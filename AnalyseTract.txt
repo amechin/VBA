@@ -1,0 +1,1964 @@
+Attribute VB_Name = "A_TRACT"
+
+
+
+Sub Liste_EAN()
+
+Application.DisplayAlerts = False
+Application.ScreenUpdating = False
+
+Dim chaine_complete As String
+
+chaine_complete = Cells(2, 1)
+
+For I = 3 To Range("A900000").End(xlUp).Row
+    If I = 999 Then
+        Cells(1, 5) = chaine_complete
+        chaine_complete = Cells(I, 1)
+    End If
+    chaine_complete = chaine_complete & ";" & Cells(I, 1)
+Next I
+
+Cells(2, 5) = chaine_complete
+
+End Sub
+
+
+Sub TravailFabArnoux()
+
+Dim Datasheet As Worksheet
+
+Call B_Retraitement_Export_Cobalt
+Call C_Extraction_Colonnes_Cobalt
+
+Sheets.Add After:=ActiveSheet
+Set Datasheet = Sheets(ActiveSheet.Name)
+
+Sheets("Base").Activate
+Sheets("Base").Columns("D:D").Select
+Selection.Copy
+
+Datasheet.Activate
+Datasheet.Range("A1").Select
+Datasheet.Paste
+
+Application.CutCopyMode = False
+ActiveSheet.Range("$A$1:$A$20000").RemoveDuplicates Columns:=1, Header:=xlYes
+Application.Goto Range("A1")
+
+End Sub
+
+Sub Refresh_ON()
+Application.ScreenUpdating = True
+End Sub
+
+
+Sub partie_chaine()
+
+Application.DisplayAlerts = False
+Application.ScreenUpdating = False
+
+For I = 7 To Range("A900000").End(xlUp).Row
+    Cells(I, 6) = Left(Cells(I, 3), Len(Cells(I, 3)) - 5)
+Next I
+
+End Sub
+
+
+
+
+Sub A_Ouverture_COBALT()
+
+Application.DisplayAlerts = False
+Application.ScreenUpdating = False
+
+Dim Fichier As String
+Dim Source As String
+
+Fichier = ActiveWorkbook.Name
+
+For I = 1 To Worksheets.Count
+    If Worksheets(I).Name = "Produits" Then
+        Sheets("Produits").Delete
+        Exit For
+    End If
+Next
+
+ChDrive "C:\Users\AMECHIN\Desktop"
+filetoopen = Application.GetOpenFilename(" Tous (*.*), *.*")
+
+Workbooks.Open Filename:=filetoopen
+Source = ActiveWorkbook.Name
+ 
+          
+' Etape 1 - Recopie des données dans le fichier de base
+    
+Windows(Source).Activate
+Sheets("Produits").Select
+Cells.Select
+Selection.Copy
+    
+
+Windows(Fichier).Activate
+Sheets.Add After:=ActiveSheet
+ActiveSheet.Name = "Produits"
+
+Range("A1").Select
+ActiveSheet.Paste
+Application.CutCopyMode = False
+
+Cells.Select
+Selection.UnMerge
+
+Range("A1").Select
+
+Sheets("Produits").Move After:=Sheets(Sheets.Count)
+
+Workbooks(Source).Close False
+
+End Sub
+
+
+
+
+
+Sub B_Retraitement_Export_Cobalt()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim compteur As Long
+Dim Compteur_C As Long
+Dim Decalage As Long
+Dim Colonne_max As Long
+Dim Libel As String
+Dim Ident_lot As String
+Dim NPhoto As String, NPres As String, CP As String, Conditionnement As Long
+Dim Qté_pdt_lot As Double
+Dim LF As Range
+Dim LS As Range
+
+Decalage = 3
+
+Sheets("Produits").Activate
+ActiveWindow.Zoom = 85
+
+
+    'Insertion de 3 colonnes vides
+    Columns("A:A").Insert Shift:=xlToRight
+    Columns("A:A").Insert Shift:=xlToRight
+    Columns("A:A").Insert Shift:=xlToRight
+    Columns("D:D").Copy
+    Columns("A:C").PasteSpecial Paste:=xlPasteFormats, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+    Application.CutCopyMode = False
+    
+    Cells(1, 1) = "Ean UVC"
+    Cells(1, 2) = "Groupe"
+    Cells(1, 3) = "Niveau tract"
+
+Colonne_max = Sheets("Produits").Range("ZZ1").End(xlToLeft).Column
+
+compteur = 2
+While Cells(compteur, 9) <> ""
+    
+    'Remplissage de la colonne 1 Numéro Photo
+    If Len(Cells(compteur, 5)) = 6 Then
+        Cells(compteur, 4) = Left(Cells(compteur, 5), 4)
+    End If
+    
+    'Remplissage de la colonne 1 "Ean UVC"
+    If CStr(Cells(compteur, 61)) = "M" Then
+        Cells(compteur, 1) = Cells(compteur, 62)
+    Else
+        Cells(compteur, 1) = Cells(compteur, Colonne_max)
+    End If
+    
+    
+    'Remplissage de la colonne 2 "Groupe"
+    Libel = UCase(Cells(compteur, 11))
+    Select Case Libel
+    
+        Case "VÊTEMENT"
+            Cells(compteur, 2) = "Vêtement du dessus"
+        Case "NUIT"
+            Cells(compteur, 2) = "Vêtement du dessus"
+        Case "ACTUA"
+            Cells(compteur, 2) = "Vêtement du dessus"
+        Case "BAIN"
+            Cells(compteur, 2) = "Vêtement du dessus"
+        
+        
+        Case "ACCESSOIRE"
+            Cells(compteur, 2) = "Equipement"
+        Case "CHAUSSURE"
+            Cells(compteur, 2) = "Equipement"
+        Case "LINGE DE MAISON"
+            Cells(compteur, 2) = "Equipement"
+        Case "PUÉRICULTURE"
+            Cells(compteur, 2) = "Equipement"
+            
+        
+        Case "CHAUSSETTE"
+            Cells(compteur, 2) = "Vêtement du dessous"
+        Case "COLLANT & MI-BAS"
+            Cells(compteur, 2) = "Vêtement du dessous"
+        Case "SOUS VÊTEMENT"
+            Cells(compteur, 2) = "Vêtement du dessous"
+        End Select
+        
+        
+        'Remplissage de la colonne 3 "Niveau de tract"
+        For Compteur_C = 125 To 132
+            If Cells(compteur, Compteur_C) = "" Then
+                Select Case Compteur_C
+                    Case 126: Cells(compteur, 3) = "HU2"
+                    Case 127: Cells(compteur, 3) = "HU1"
+                    Case 128: Cells(compteur, 3) = "SU5"
+                    Case 129: Cells(compteur, 3) = "SU4"
+                    Case 130: Cells(compteur, 3) = "SU3"
+                    Case 131: Cells(compteur, 3) = "SU2"
+                    Case 132: Cells(compteur, 3) = "UE2"
+                End Select
+                Exit For
+            End If
+        Next Compteur_C
+        
+        'Recheck "Niveau de tract"
+        If Cells(compteur, 3) = "" Then
+        For Compteur_C = 129 To 132
+            If Cells(compteur, Compteur_C) = "" Then
+                Select Case Compteur_C
+                    Case 130: Cells(compteur, 3) = "SU3"
+                    Case 131: Cells(compteur, 3) = "SU2"
+                    Case 132: Cells(compteur, 3) = "UE2"
+                End Select
+                Exit For
+            End If
+        Next Compteur_C
+        End If
+
+        Set Plage = Range(Cells(compteur, 125), Cells(compteur, 132))
+        If Application.CountA(Plage) <> 0 Then
+        Else: Cells(compteur, 3) = "Non tracté"
+        End If
+        
+        'Les produits annulés ne sont pas supprimés, simplement flagués "ANNULE"
+        If Cells(compteur, Decalage + 30) = "Annul. validée UGC" Then
+            Cells(compteur, Decalage + 32) = "PRODUIT ANNULE - " & Cells(compteur, Decalage + 32)
+        End If
+
+        
+    compteur = compteur + 1
+    Wend
+    
+    
+    'remplacement des . par les , en colonne qté identifiant lot
+    Columns(195).Select
+    Selection.Replace What:=".", Replacement:=",", LookAt:=xlPart, _
+    SearchOrder:=xlByColumns, MatchCase:=True, SearchFormat:=False, _
+    ReplaceFormat:=False
+    Selection.NumberFormat = "0.0"
+
+
+End Sub
+
+
+
+
+Sub C_Extraction_Colonnes_Cobalt()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Entete_Colonne As String
+Dim Position As Long
+Dim ligne As Long
+
+
+For I = 1 To Worksheets.Count
+    If Worksheets(I).Name = "Base" Then
+        Sheets("Base").Delete
+        Exit For
+    End If
+Next
+
+For I = 1 To Worksheets.Count
+    If Worksheets(I).Name = "Correspondances" Then
+        Sheets("Correspondances").Delete
+        Exit For
+    End If
+Next
+
+Sheets.Add After:=ActiveSheet
+ActiveSheet.Name = "Base"
+Sheets("Base").Move After:=Sheets(Sheets.Count)
+ActiveWindow.Zoom = 85
+
+Sheets.Add After:=ActiveSheet
+ActiveSheet.Name = "Correspondances"
+Sheets("Correspondances").Move After:=Sheets(Sheets.Count)
+
+
+Cells(1, 1) = 1
+Cells(1, 2) = "Groupe"
+
+Cells(2, 1) = 2
+Cells(2, 2) = "Rayon"
+
+Cells(3, 1) = 3
+Cells(3, 2) = "Catégorie"
+
+Cells(4, 1) = 4
+Cells(4, 2) = "Ean UVC"
+
+Cells(5, 1) = 5
+Cells(5, 2) = "Code Produit"
+
+Cells(6, 1) = 6
+Cells(6, 2) = "Num. Photo"
+
+Cells(7, 1) = 7
+Cells(7, 2) = "Num. Prés."
+
+Cells(8, 1) = 8
+Cells(8, 2) = "Libellé STL"
+'Cells(8, 2) = "Lb Struct. d'offre"
+
+Cells(9, 1) = 9
+Cells(9, 2) = "Taille"
+
+
+Cells(10, 1) = 10
+Cells(10, 2) = "Coloris"
+
+Cells(11, 1) = 11
+Cells(11, 2) = "Niveau tract"
+'Cells(11, 2) = "Unité de besoin"
+    
+Cells(12, 1) = 12
+Cells(12, 2) = "Qté Pdt Lot"
+
+Cells(13, 1) = 13
+Cells(13, 2) = "Conditionnement"
+
+Cells(14, 1) = 14
+Cells(14, 2) = "Conditionnement de cession"
+
+Cells(15, 1) = 15
+Cells(15, 2) = "Type Ean"
+
+Cells(16, 1) = 16
+Cells(16, 2) = "Ident. Lot"
+
+Cells(17, 1) = 17
+Cells(17, 2) = "PC"
+
+Cells(18, 1) = 18
+Cells(18, 2) = "PVC Promo T1"
+
+Cells(19, 1) = 19
+Cells(19, 2) = "Marque"
+
+
+For J = 1 To Sheets("Produits").Range("ZZ1").End(xlToLeft).Column
+Sheets("Produits").Activate
+Entete_Colonne = Sheets("Produits").Cells(1, J)
+
+
+Position = 0
+For I = 1 To Sheets("Correspondances").Range("A100000").End(xlUp).Row
+Sheets("Correspondances").Activate
+If Cells(I, 2) = Entete_Colonne Then
+Position = Cells(I, 1)
+Exit For
+End If
+Next I
+
+If Position <> 0 Then
+    Sheets("Produits").Activate
+    Columns(J).Select
+    Selection.Copy
+    Sheets("Base").Activate
+    Cells(1, Position).Select
+    ActiveSheet.Paste
+End If
+
+Next J
+
+Sheets("Base").Activate
+For I = 2 To Sheets("Base").Range("A100000").End(xlUp).Row
+Sheets("Base").Activate
+
+If Left(Cells(I, 8), 14) = "PRODUIT ANNULE" Then
+    Sheets("Base").Rows(I).Delete Shift:=xlUp
+    I = I - 1
+End If
+
+Next I
+
+Sheets("Base").Activate
+ligne = Sheets("Base").Range("A100000").End(xlUp).Row
+
+ActiveWorkbook.Worksheets("Base").Sort.SortFields.Clear
+ActiveWorkbook.Worksheets("Base").Sort.SortFields.Add Key:=Range("F2:F" & ligne), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+ActiveWorkbook.Worksheets("Base").Sort.SortFields.Add Key:=Range("G2:G" & ligne), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortTextAsNumbers
+    
+With ActiveWorkbook.Worksheets("Base").Sort
+    .SetRange Range("A1:X" & ligne)
+    .Header = xlYes
+    .MatchCase = False
+    .Orientation = xlTopToBottom
+    .SortMethod = xlPinYin
+    .Apply
+End With
+
+Sheets("Base").Columns(1).EntireColumn.AutoFit
+Sheets("Base").Columns(1).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(2).EntireColumn.AutoFit
+Sheets("Base").Columns(2).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(3).EntireColumn.AutoFit
+Sheets("Base").Columns(3).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(4).ColumnWidth = 15
+Sheets("Base").Columns(4).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(5).ColumnWidth = 9
+Sheets("Base").Columns(5).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(6).ColumnWidth = 10
+Sheets("Base").Columns(6).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(7).ColumnWidth = 10
+Sheets("Base").Columns(7).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(8).EntireColumn.AutoFit
+Sheets("Base").Columns(8).HorizontalAlignment = xlLeft
+Sheets("Base").Columns(9).ColumnWidth = 7.1
+Sheets("Base").Columns(9).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(10).EntireColumn.AutoFit
+Sheets("Base").Columns(10).HorizontalAlignment = xlLeft
+Sheets("Base").Columns(11).ColumnWidth = 10.1
+Sheets("Base").Columns(11).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(12).ColumnWidth = 4
+Sheets("Base").Columns(12).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(13).ColumnWidth = 7.1
+Sheets("Base").Columns(13).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(14).ColumnWidth = 7.1
+Sheets("Base").Columns(14).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(15).ColumnWidth = 4
+Sheets("Base").Columns(15).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(16).ColumnWidth = 9
+Sheets("Base").Columns(16).HorizontalAlignment = xlRight
+Sheets("Base").Columns(17).ColumnWidth = 7.1
+Sheets("Base").Columns(17).HorizontalAlignment = xlRight
+Sheets("Base").Columns(18).ColumnWidth = 9
+Sheets("Base").Columns(18).HorizontalAlignment = xlRight
+Sheets("Base").Columns(19).EntireColumn.AutoFit
+Sheets("Base").Columns(19).HorizontalAlignment = xlCenter
+
+Sheets("Base").Rows("1:1").WrapText = True
+Sheets("Base").Rows("1:1").HorizontalAlignment = xlCenter
+Sheets("Base").Rows("1:1").RowHeight = 60
+
+Columns("O:S").Select
+Selection.Copy
+Columns("T:X").PasteSpecial Paste:=xlPasteFormats
+
+Range("T1:X1").Interior.Color = RGB(32, 255, 224)
+ActiveWindow.DisplayGridlines = False
+
+End Sub
+
+Sub C_Extraction_Colonnes_Cobalt_Lbl_Struct_Offre()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Entete_Colonne As String
+Dim Position As Long
+Dim ligne As Long
+
+
+For I = 1 To Worksheets.Count
+    If Worksheets(I).Name = "Base" Then
+        Sheets("Base").Delete
+        Exit For
+    End If
+Next
+
+For I = 1 To Worksheets.Count
+    If Worksheets(I).Name = "Correspondances" Then
+        Sheets("Correspondances").Delete
+        Exit For
+    End If
+Next
+
+Sheets.Add After:=ActiveSheet
+ActiveSheet.Name = "Base"
+Sheets("Base").Move After:=Sheets(Sheets.Count)
+ActiveWindow.Zoom = 85
+
+Sheets.Add After:=ActiveSheet
+ActiveSheet.Name = "Correspondances"
+Sheets("Correspondances").Move After:=Sheets(Sheets.Count)
+
+
+Cells(1, 1) = 1
+Cells(1, 2) = "Groupe"
+
+Cells(2, 1) = 2
+Cells(2, 2) = "Rayon"
+
+Cells(3, 1) = 3
+Cells(3, 2) = "Catégorie"
+
+Cells(4, 1) = 4
+Cells(4, 2) = "Ean UVC"
+
+Cells(5, 1) = 5
+Cells(5, 2) = "Code Produit"
+
+Cells(6, 1) = 6
+Cells(6, 2) = "Num. Photo"
+
+Cells(7, 1) = 7
+Cells(7, 2) = "Num. Prés."
+
+Cells(8, 1) = 8
+Cells(8, 2) = "Lb Struct. d'offre"
+
+Cells(9, 1) = 9
+Cells(9, 2) = "Taille"
+
+Cells(10, 1) = 10
+Cells(10, 2) = "Coloris"
+
+Cells(11, 1) = 11
+Cells(11, 2) = "Niveau tract"
+
+Cells(12, 1) = 12
+Cells(12, 2) = "Qté Pdt Lot"
+
+Cells(13, 1) = 13
+Cells(13, 2) = "Conditionnement"
+
+Cells(14, 1) = 14
+Cells(14, 2) = "Conditionnement de cession"
+
+Cells(15, 1) = 15
+Cells(15, 2) = "Type Ean"
+
+Cells(16, 1) = 16
+Cells(16, 2) = "Ident. Lot"
+
+Cells(17, 1) = 17
+Cells(17, 2) = "PC"
+
+Cells(18, 1) = 18
+Cells(18, 2) = "PVC Promo T1"
+
+Cells(19, 1) = 19
+Cells(19, 2) = "Marque"
+
+
+For J = 1 To Sheets("Produits").Range("ZZ1").End(xlToLeft).Column
+Sheets("Produits").Activate
+Entete_Colonne = Sheets("Produits").Cells(1, J)
+
+
+Position = 0
+For I = 1 To Sheets("Correspondances").Range("A100000").End(xlUp).Row
+Sheets("Correspondances").Activate
+If Cells(I, 2) = Entete_Colonne Then
+Position = Cells(I, 1)
+Exit For
+End If
+Next I
+
+If Position <> 0 Then
+    Sheets("Produits").Activate
+    Columns(J).Select
+    Selection.Copy
+    Sheets("Base").Activate
+    Cells(1, Position).Select
+    ActiveSheet.Paste
+End If
+
+Next J
+
+Sheets("Base").Activate
+For I = 2 To Sheets("Base").Range("A100000").End(xlUp).Row
+Sheets("Base").Activate
+
+If Left(Cells(I, 8), 14) = "PRODUIT ANNULE" Then
+    Sheets("Base").Rows(I).Delete Shift:=xlUp
+    I = I - 1
+End If
+
+Next I
+
+Sheets("Base").Activate
+ligne = Sheets("Base").Range("A100000").End(xlUp).Row
+
+ActiveWorkbook.Worksheets("Base").Sort.SortFields.Clear
+ActiveWorkbook.Worksheets("Base").Sort.SortFields.Add Key:=Range("F2:F" & ligne), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+ActiveWorkbook.Worksheets("Base").Sort.SortFields.Add Key:=Range("G2:G" & ligne), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortTextAsNumbers
+    
+With ActiveWorkbook.Worksheets("Base").Sort
+    .SetRange Range("A1:X" & ligne)
+    .Header = xlYes
+    .MatchCase = False
+    .Orientation = xlTopToBottom
+    .SortMethod = xlPinYin
+    .Apply
+End With
+
+Sheets("Base").Columns(1).EntireColumn.AutoFit
+Sheets("Base").Columns(1).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(2).EntireColumn.AutoFit
+Sheets("Base").Columns(2).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(3).EntireColumn.AutoFit
+Sheets("Base").Columns(3).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(4).ColumnWidth = 15
+Sheets("Base").Columns(4).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(5).ColumnWidth = 9
+Sheets("Base").Columns(5).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(6).ColumnWidth = 10
+Sheets("Base").Columns(6).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(7).ColumnWidth = 10
+Sheets("Base").Columns(7).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(8).EntireColumn.AutoFit
+Sheets("Base").Columns(8).HorizontalAlignment = xlLeft
+Sheets("Base").Columns(9).ColumnWidth = 7.1
+Sheets("Base").Columns(9).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(10).EntireColumn.AutoFit
+Sheets("Base").Columns(10).HorizontalAlignment = xlLeft
+Sheets("Base").Columns(11).ColumnWidth = 10.1
+Sheets("Base").Columns(11).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(12).ColumnWidth = 4
+Sheets("Base").Columns(12).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(13).ColumnWidth = 7.1
+Sheets("Base").Columns(13).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(14).ColumnWidth = 7.1
+Sheets("Base").Columns(14).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(15).ColumnWidth = 4
+Sheets("Base").Columns(15).HorizontalAlignment = xlCenter
+Sheets("Base").Columns(16).ColumnWidth = 9
+Sheets("Base").Columns(16).HorizontalAlignment = xlRight
+Sheets("Base").Columns(17).ColumnWidth = 7.1
+Sheets("Base").Columns(17).HorizontalAlignment = xlRight
+Sheets("Base").Columns(18).ColumnWidth = 9
+Sheets("Base").Columns(18).HorizontalAlignment = xlRight
+Sheets("Base").Columns(19).EntireColumn.AutoFit
+Sheets("Base").Columns(19).HorizontalAlignment = xlCenter
+
+Sheets("Base").Rows("1:1").WrapText = True
+Sheets("Base").Rows("1:1").HorizontalAlignment = xlCenter
+Sheets("Base").Rows("1:1").RowHeight = 60
+
+Columns("O:S").Select
+Selection.Copy
+Columns("T:X").PasteSpecial Paste:=xlPasteFormats
+
+Range("T1:X1").Interior.Color = RGB(32, 255, 224)
+ActiveWindow.DisplayGridlines = False
+
+End Sub
+
+
+Sub D_RT_Ident_Lot()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Ligne_Temp As Long
+Dim Ident_lot As String
+Dim Num_Photo As String, CP As String
+
+Sheets("Base").Activate
+
+
+'Conversion de la colonne Ident_Lot en texte
+Columns(16).Select
+Selection.TextToColumns Destination:=Range("P1"), DataType:=xlDelimited, _
+    TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, _
+    Semicolon:=False, Comma:=False, Space:=False, Other:=False, FieldInfo _
+    :=Array(1, 2), TrailingMinusNumbers:=True
+   
+
+'On isole les codes Ident_lot dans un fichier temp
+For I = 1 To Worksheets.Count
+If Worksheets(I).Name = "TEMP" Then
+    Sheets("TEMP").Delete
+    Exit For
+End If
+Next
+        
+Sheets.Add After:=ActiveSheet
+ActiveSheet.Name = "TEMP"
+
+Sheets("Base").Columns(16).Copy
+Sheets("TEMP").Activate
+Sheets("TEMP").Cells(1, 1).Activate
+ActiveSheet.Paste
+
+Columns(1).Select
+Ligne_Temp = Sheets("TEMP").Range("A900000").End(xlUp).Row
+ActiveSheet.Range("$A$1:$A$" & Ligne_Temp).RemoveDuplicates Columns:=1, Header:=xlNo
+
+
+Ligne_Temp = Sheets("TEMP").Range("A900000").End(xlUp).Row
+Columns(1).Select
+ActiveWorkbook.Worksheets("TEMP").Sort.SortFields.Clear
+ActiveWorkbook.Worksheets("TEMP").Sort.SortFields.Add Key:=Range("A1"), _
+SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+xlSortTextAsNumbers
+With ActiveWorkbook.Worksheets("TEMP").Sort
+.SetRange Range("A1:A" & Ligne_Temp)
+.Header = xlYes
+.MatchCase = False
+.Orientation = xlTopToBottom
+.SortMethod = xlPinYin
+.Apply
+End With
+
+'Rows("1:1").Select
+'Selection.Delete Shift:=xlUp
+'Application.CutCopyMode = False
+   
+   
+'On boucle dans Temp sur les codes ident lot et on vient passer en reviue la base autant de fois qu'il y a de codes
+For I = 2 To Sheets("TEMP").Range("A200000").End(xlUp).Row
+    Ident_lot = Sheets("TEMP").Cells(I, 1)
+    
+    For k = 2 To Sheets("Base").Range("A900000").End(xlUp).Row
+        If Sheets("Base").Cells(k, 16) = Ident_lot And Sheets("Base").Cells(k, 12) = "" Then
+            Num_Photo = Sheets("Base").Cells(k, 6)
+            CP = Sheets("Base").Cells(k, 5)
+            Exit For
+        End If
+    Next k
+    
+    For J = 2 To Sheets("Base").Range("A900000").End(xlUp).Row
+        If Sheets("Base").Cells(J, 16) = Ident_lot And Sheets("Base").Cells(J, 12) <> "" Then
+            Sheets("Base").Cells(J, 13) = CLng(Sheets("Base").Cells(J, 12))
+            Sheets("Base").Cells(J, 6) = Num_Photo
+            Sheets("Base").Cells(J, 5) = CP
+        End If
+    Next J
+Next I
+
+Sheets("Base").Activate
+Application.Goto Range("A1")
+
+End Sub
+
+Sub E_RETRAITEMENT_LIGNES_COLIS_DISPLAY()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Sheets("Base").Activate
+
+For I = 2 To Sheets("Base").Range("D900000").End(xlUp).Row
+    If Left(Sheets("Base").Cells(I, 8), 5) = "COLIS" Or Left(Sheets("Base").Cells(I, 8), 7) = "DISPLAY" Or Left(Sheets("Base").Cells(I, 8), 3) = "BOX " Then
+        Rows(I).Delete Shift:=xlUp
+        I = I - 1
+    End If
+Next I
+
+Application.Goto Range("A1")
+End Sub
+
+Sub F_NOMBRE_UB_PARTIE_1()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim ligne As Long, Ligne_Temp As Long
+
+Sheets("Base").Activate
+
+ligne = Sheets("Base").Range("D900000").End(xlUp).Row
+Range("L2:L" & ligne).ClearContents
+Sheets("Base").Cells(1, 12) = "Concat"
+
+''Concat
+'For i = 2 To Sheets("Base").Range("D900000").End(xlUp).Row
+'    If Sheets("Base").Cells(i, 2) <> "Vêtement" Then
+'        Sheets("Base").Cells(i, 12) = Sheets("Base").Cells(i, 1) & "_" & Sheets("Base").Cells(i, 2) & "_" & Sheets("Base").Cells(i, 3)
+'Next i
+'
+'''Conversion de la colonne Concat en texte
+''Columns(12).Select
+''Selection.TextToColumns Destination:=Range("P1"), DataType:=xlDelimited, _
+''    TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, _
+''    Semicolon:=False, Comma:=False, Space:=False, Other:=False, FieldInfo _
+''    :=Array(1, 2), TrailingMinusNumbers:=True
+'
+'
+''On isole les codes Concat dans un fichier temp
+'For i = 1 To Worksheets.Count
+'If Worksheets(i).Name = "TEMP" Then
+'    Sheets("TEMP").Delete
+'    Exit For
+'End If
+'Next
+'
+'Sheets.Add After:=ActiveSheet
+'ActiveSheet.Name = "TEMP"
+'
+'Sheets("Base").Columns(12).Copy
+'Sheets("TEMP").Activate
+'Sheets("TEMP").Cells(1, 1).Activate
+'ActiveSheet.Paste
+'
+'Columns(1).Select
+'Ligne_Temp = Sheets("TEMP").Range("A900000").End(xlUp).Row
+'ActiveSheet.Range("$A$1:$A$" & Ligne_Temp).RemoveDuplicates Columns:=1, Header:=xlNo
+'
+'
+'Ligne_Temp = Sheets("TEMP").Range("A900000").End(xlUp).Row
+'Columns(1).Select
+'ActiveWorkbook.Worksheets("TEMP").Sort.SortFields.Clear
+'ActiveWorkbook.Worksheets("TEMP").Sort.SortFields.Add Key:=Range("A1"), _
+'SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+'xlSortTextAsNumbers
+'With ActiveWorkbook.Worksheets("TEMP").Sort
+'.SetRange Range("A1:A" & Ligne_Temp)
+'.Header = xlYes
+'.MatchCase = False
+'.Orientation = xlTopToBottom
+'.SortMethod = xlPinYin
+'.Apply
+'End With
+'
+'
+'
+''Range("L2:L" & Ligne).ClearContents
+''Sheets("Base").Cells(1, 12) = "Nb UB"
+''
+''
+''For i = 2 To Sheets("Base").Range("D900000").End(xlUp).Row
+''    If Sheets("Base").Cells(i, 6) <> Sheets("Base").Cells(i - 1, 6) And Sheets("Base").Cells(i, 11) <> "Non tracté" Then
+''        Sheets("Base").Cells(i, 12) = 1
+''    End If
+''Next i
+'
+Application.Goto Range("A1")
+End Sub
+
+Sub F_NOMBRE_UB_PARTIE_2()
+
+End Sub
+
+
+Sub G_Ouverture_SIDE()
+
+Application.DisplayAlerts = False
+Application.ScreenUpdating = False
+
+Dim Fichier As String
+Dim Source As String
+
+Fichier = ActiveWorkbook.Name
+
+If Sheets.Count > 3 Then
+For I = 1 To Worksheets.Count
+    If Worksheets(I).Name = "SIDE" Then
+        Sheets("SIDE").Delete
+        Exit For
+    End If
+Next
+End If
+
+ChDrive "C:\Users\AMECHIN\Desktop"
+filetoopen = Application.GetOpenFilename(" Tous (*.*), *.*")
+
+Workbooks.Open Filename:=filetoopen
+Source = ActiveWorkbook.Name
+          
+          
+'Recopie des données dans le fichier de base
+    
+Windows(Source).Activate
+Sheets(1).Select
+Cells.Select
+Selection.Copy
+    
+Windows(Fichier).Activate
+Sheets.Add After:=ActiveSheet
+ActiveSheet.Name = "SIDE"
+
+Range("A1").Select
+ActiveSheet.Paste
+Application.CutCopyMode = False
+
+'On défusionne toutes les cellules
+Cells.Select
+Selection.UnMerge
+
+'Une MEF pour la route
+Rows("7:7").Select
+Range(Selection, Selection.End(xlDown)).RowHeight = 14
+Columns(1).ColumnWidth = 20
+Columns(2).EntireColumn.AutoFit
+Columns(3).EntireColumn.AutoFit
+Columns(4).EntireColumn.AutoFit
+Columns(5).EntireColumn.AutoFit
+Columns(6).EntireColumn.AutoFit
+
+ActiveWindow.DisplayGridlines = False
+
+'On somme les colonnes dans SIDE en laissant la place pour SU2
+'For i = 8 To Sheets("SIDE").Range("A200000").End(xlUp).Row
+'    Cells(i, 21) = Cells(i, 5) + Cells(i, 7) + Cells(i, 9) + Cells(i, 11) + Cells(i, 13) + Cells(i, 15) + Cells(i, 17) + Cells(i, 19)
+'    Cells(i, 22) = Cells(i, 6) + Cells(i, 8) + Cells(i, 10) + Cells(i, 12) + Cells(i, 14) + Cells(i, 16) + Cells(i, 18) + Cells(i, 20)
+'Next i
+
+Cells(1, 1) = "Sorties KS"
+Cells(6, 2) = "Libellé EAN"
+Range("A1").Select
+Sheets("SIDE").Move After:=Sheets(Sheets.Count)
+
+Workbooks(Source).Close False
+
+End Sub
+
+Sub H_Ouverture_SIDO()
+
+
+Application.DisplayAlerts = False
+Application.ScreenUpdating = False
+
+Dim Fichier As String
+Dim Source As String
+
+Fichier = ActiveWorkbook.Name
+
+If Sheets.Count > 3 Then
+For I = 1 To Worksheets.Count
+    If Worksheets(I).Name = "SIDO" Then
+        Sheets("SIDO").Delete
+        Exit For
+    End If
+Next
+End If
+
+ChDrive "C:\Users\AMECHIN\Desktop\Duo Gagnant"
+filetoopen = Application.GetOpenFilename(" Tous (*.*), *.*")
+
+Workbooks.Open Filename:=filetoopen
+Source = ActiveWorkbook.Name
+          
+          
+'Recopie des données dans le fichier de base
+    
+Windows(Source).Activate
+Sheets(1).Select
+Cells.Select
+Selection.Copy
+    
+
+Windows(Fichier).Activate
+Sheets.Add After:=ActiveSheet
+ActiveSheet.Name = "SIDO"
+
+
+Range("A1").Select
+ActiveSheet.Paste
+Application.CutCopyMode = False
+
+Cells.Select
+Selection.UnMerge
+
+Columns("B:B").Select
+Selection.TextToColumns Destination:=Range("B:B"), DataType:=xlDelimited, _
+        TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, _
+        Semicolon:=False, Comma:=False, Space:=False, Other:=False, FieldInfo _
+        :=Array(1, 2), TrailingMinusNumbers:=True
+
+If Left(Cells(6, 1), 4) = "Saut" Then
+
+    'une MEF et c'est plus sympas
+    Rows("9:9").Select
+    Range(Selection, Selection.End(xlDown)).RowHeight = 14
+    Columns(1).ColumnWidth = 25
+    Columns(2).EntireColumn.AutoFit
+    Columns(3).EntireColumn.AutoFit
+    Columns(4).EntireColumn.AutoFit
+    Columns(5).EntireColumn.AutoFit
+    Columns(6).EntireColumn.AutoFit
+    Columns(7).EntireColumn.AutoFit
+    Columns(8).EntireColumn.AutoFit
+    Columns(9).EntireColumn.AutoFit
+    
+Else
+
+    'une MEF et c'est plus sympas
+    Rows("7:7").Select
+    Range(Selection, Selection.End(xlDown)).RowHeight = 14
+    Columns(1).ColumnWidth = 8
+    Columns(2).EntireColumn.AutoFit
+    Columns(3).EntireColumn.AutoFit
+    Columns(4).EntireColumn.AutoFit
+    Columns(5).EntireColumn.AutoFit
+    Columns(6).EntireColumn.AutoFit
+    Columns(7).EntireColumn.AutoFit
+    Columns(8).EntireColumn.AutoFit
+    Columns(9).EntireColumn.AutoFit
+
+End If
+
+
+ActiveWindow.DisplayGridlines = False
+Cells(1, 1) = "Facturation"
+Cells(6, 1) = "Rayon"
+Cells(6, 2) = "Code Produit"
+Cells(6, 3) = "Libellé Produit"
+
+Range("A1").Select
+
+Sheets("SIDO").Move After:=Sheets(Sheets.Count)
+
+Workbooks(Source).Close False
+
+End Sub
+
+
+Sub I_TRACT_QHA_CACESSION_UNIV()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Sheets("Base").Activate
+Sheets("Base").Name = "RESULTATS"
+
+'Conversion du CP en texte
+Columns(5).Select
+Selection.TextToColumns Destination:=Range("E1"), DataType:=xlDelimited, _
+    TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=False, _
+    Semicolon:=False, Comma:=False, Space:=False, Other:=False, FieldInfo _
+    :=Array(1, 2), TrailingMinusNumbers:=True
+    
+'IndexEquiv pour récuperer les Volumes Engagés et le CA Cession HT
+Sheets("RESULTATS").Cells(1, 20) = "Volumes Engagés"
+Sheets("RESULTATS").Cells(1, 21) = "CA Cession"
+
+For I = 2 To Sheets("RESULTATS").Range("D200000").End(xlUp).Row
+    Cells(I, 20).FormulaR1C1 = "=IFERROR(INDEX(SIDO!C[-19]:C[-11],MATCH(RESULTATS!RC[-15],SIDO!C[-18],0),4)*RESULTATS!RC[-7],"""")"
+    Cells(I, 20).HorizontalAlignment = xlRight
+    Cells(I, 20).NumberFormat = 0
+    
+    Cells(I, 21).FormulaR1C1 = "=IFERROR(INDEX(SIDO!C[-20]:C[-12],MATCH(RESULTATS!RC[-16],SIDO!C[-19],0),4)*RESULTATS!RC[-8]*RESULTATS!RC[-4],"""")"
+    Cells(I, 21).HorizontalAlignment = xlRight
+    Cells(I, 21).NumberFormat = "_-* #,##0 $_-;-* #,##0 $_-;_-* ""-""?? $_-;_-@_-"
+    
+Next I
+
+Sheets("RESULTATS").Cells(1, 20).Font.Color = RGB(0, 0, 0)
+Sheets("RESULTATS").Cells(1, 21).Font.Color = RGB(0, 0, 0)
+
+Sheets("RESULTATS").Columns(20).ColumnWidth = 11.5
+Sheets("RESULTATS").Columns(21).ColumnWidth = 11.5
+
+End Sub
+
+
+Sub J_TRACT_CA_QV_UNIV()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim EAN_UVC As String, CP As String
+Dim CA As Double, Conditionnement As Long
+Dim Qtes_Ventes As Double, Qtes_Achats As Double
+Dim ligne As Long
+Dim EAN_Fait As String
+
+EAN_Fait = ""
+CP = ""
+
+Sheets("RESULTATS").Activate
+
+Sheets("RESULTATS").Cells(1, 22) = "Volumes Vendus"
+Sheets("RESULTATS").Cells(1, 23) = "CA"
+
+'C/C valeur la colonne Volumes Engagés et CA Cession
+
+Columns(20).Copy
+Columns(20).PasteSpecial Paste:=xlPasteValues
+
+Columns(21).Copy
+Columns(21).PasteSpecial Paste:=xlPasteValues
+
+'Tri sur la colonne EAN
+ligne = Sheets("RESULTATS").Range("A900000").End(xlUp).Row
+ActiveWorkbook.Worksheets("RESULTATS").Sort.SortFields.Clear
+ActiveWorkbook.Worksheets("RESULTATS").Sort.SortFields.Add Key:=Range("D2:D" & ligne), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortTextAsNumbers
+    
+With ActiveWorkbook.Worksheets("RESULTATS").Sort
+    .SetRange Range("A1:X" & ligne)
+    .Header = xlYes
+    .MatchCase = False
+    .Orientation = xlTopToBottom
+    .SortMethod = xlPinYin
+    .Apply
+End With
+
+'Routine pour rammener CA et QV
+For I = 2 To Sheets("RESULTATS").Range("D900000").End(xlUp).Row
+
+    EAN_UVC = ""
+    ligne = 1
+    CA = 0
+    Qtes_Ventes = 0
+    CP = ""
+    
+    'Emplacement des variables
+    Sheets("RESULTATS").Activate
+    EAN_UVC = Cells(I, 4)
+    CP = Cells(I, 5)
+    
+    
+    If EAN_UVC <> EAN_Fait Then
+        Sheets("SIDE").Activate
+        
+        'Ligne EnTete SIDE
+        Range("A6").Select
+        Selection.AutoFilter
+        
+        'Emplacement variable filtre
+        Selection.AutoFilter Field:=1, Criteria1:=EAN_UVC
+        
+        ligne = Sheets("SIDE").Range("A900000").End(xlUp).Row
+        
+        If ligne > 6 Then 'Pour tract
+        
+        'Colonnes CA et Qte Ventes A MODIFIER
+        CA = Cells(ligne, 3)
+        Qtes_Ventes = Cells(ligne, 4)
+    
+        Sheets("RESULTATS").Activate
+        Cells(I, 23) = CA
+        Cells(I, 23).NumberFormat = "#,##0 $"
+        Cells(I, 23).HorizontalAlignment = xlRight
+        Cells(I, 22) = Qtes_Ventes
+        Cells(I, 22).NumberFormat = 0
+        Cells(I, 22).HorizontalAlignment = xlRight
+        End If
+        EAN_Fait = EAN_UVC
+    End If
+Next I
+
+Sheets("SIDE").Activate
+Range("A7").Select
+Selection.AutoFilter
+
+Sheets("RESULTATS").Activate
+
+Sheets("RESULTATS").Cells(1, 22).Font.Color = RGB(0, 0, 0)
+Sheets("RESULTATS").Cells(1, 23).Font.Color = RGB(0, 0, 0)
+
+Sheets("RESULTATS").Columns(22).ColumnWidth = 11.5
+Sheets("RESULTATS").Columns(23).ColumnWidth = 11.5
+
+Sheets("RESULTATS").Range("A1").Select
+
+End Sub
+
+
+
+Sub K_RESULTAT_TRACT_TR_UNIV_ADRIEN()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim CP1 As String, CP2 As String
+Dim EAN1 As String, EAN2 As String
+Dim Qtes_Achats_Tot As Double, Qtes_Ventes_Tot As Double
+Dim ligne As Long, Marqueur As Long
+Dim TR As Double
+
+Qtes_Achats_Tot = 0
+Qtes_Ventes_Tot = 0
+CP1 = ""
+CP2 = ""
+EAN1 = ""
+EAN2 = ""
+Marqueur = 1
+TR = 0
+
+Sheets("RESULTATS").Activate
+ligne = Sheets("RESULTATS").Range("D900000").End(xlUp).Row
+
+ActiveWorkbook.Worksheets("RESULTATS").Sort.SortFields.Clear
+
+ActiveWorkbook.Worksheets("RESULTATS").Sort.SortFields.Add Key:=Range("D2:D" & ligne), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:=xlSortNormal
+With ActiveWorkbook.Worksheets("RESULTATS").Sort
+    .SetRange Range("A1:X" & ligne)
+    .Header = xlYes
+    .MatchCase = False
+    .Orientation = xlTopToBottom
+    .SortMethod = xlPinYin
+    .Apply
+End With
+
+
+Sheets("RESULTATS").Cells(1, 24) = "Taux de Revente"
+Sheets("RESULTATS").Cells(1, 24).Font.Color = RGB(0, 0, 0)
+
+For I = 2 To Sheets("RESULTATS").Range("D900000").End(xlUp).Row
+
+    ligne = 1
+    CP1 = ""
+    CP2 = ""
+    EAN1 = ""
+    EAN2 = ""
+
+    Sheets("RESULTATS").Activate
+
+    CP1 = Cells(I, 5)
+    CP2 = Cells(I + 1, 5)
+    EAN1 = Cells(I, 4)
+    EAN2 = Cells(I + 1, 4)
+    
+    If Cells(I, 20) = "" Then
+        Cells(I, 20) = 0
+    End If
+    
+    If Left(Cells(I, 8), 14) <> "PRODUIT ANNULE" Then
+        Qtes_Achats_Tot = Qtes_Achats_Tot + Cells(I, 20)
+            If Cells(I, 22) <> "" Then
+                Qtes_Ventes_Tot = Cells(I, 22)
+                Marqueur = I
+            End If
+            
+            If EAN1 <> EAN2 Then
+                If Qtes_Achats_Tot > 0 Then
+                    Cells(Marqueur, 24) = Qtes_Ventes_Tot / Qtes_Achats_Tot
+                    Cells(Marqueur, 24).Style = "Percent"
+                    Cells(Marqueur, 24).NumberFormat = "0.0%"
+
+                    Qtes_Ventes_Tot = 0
+                    Qtes_Achats_Tot = 0
+                End If
+            End If
+
+        End If
+Next I
+
+Sheets("RESULTATS").Columns(24).ColumnWidth = 11.5
+Sheets("RESULTATS").Range("A1").Select
+
+End Sub
+
+Sub E_MET_DES_X()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim NP1 As String, NP2 As String
+
+Marqueur = 2
+
+Sheets("RESULTATS").Activate
+NP1 = Cells(2, 6)
+NP2 = Cells(3, 6)
+
+For I = 2 To Sheets("RESULTATS").Range("D900000").End(xlUp).Row
+
+    Sheets("RESULTATS").Activate
+
+    NP1 = Cells(I, 6)
+    NP2 = Cells(I + 1, 6)
+    
+    If NP1 <> NP2 Then
+        
+        Cells(Marqueur, 26) = "x"
+        Marqueur = I + 1
+        
+    End If
+
+Next I
+
+Sheets("RESULTATS").Columns(26).ColumnWidth = 15
+Sheets("RESULTATS").Range("A1").Select
+
+End Sub
+
+Sub Suppr_All_Pict()
+    Sheets("RESULTATS").DrawingObjects.Delete
+End Sub
+
+Sub Suppr_All_Pict_Activesheet()
+    ActiveSheet.DrawingObjects.Delete
+End Sub
+
+Sub L_PHOTO()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim CheminDefaut As String
+Dim CheminPhoto As String
+Dim NumPhotoPrevious, NumPhoto As String
+Dim h As Long
+Dim Position_anterieure As Long, Decalage_colonne As Integer
+
+Sheets("RESULTATS").DrawingObjects.Delete
+
+CheminDefaut = "C:\Users\AMECHIN\Pictures"
+h = 80
+Position_anterieure = 3
+
+For I = 2 To Sheets("RESULTATS").Range("D900000").End(xlUp).Row
+On Error GoTo errfich
+Decalage_colonne = 0
+NumPhoto = Cells(I, 6)
+
+If Sheets("RESULTATS").Cells(I, 26) <> "" Then
+    If I - Position_anterieure < 3 And I - Position_anterieure > 0 Then: Decalage_colonne = 64
+    CheminPhoto = "G:\Dir_Commerciale\Textile\commun\03_Administration et Supports\Base de données\Photos collection\HIVER 2018\Photos U salon AH18\" & Cells(I, 6) & ".jpg"
+    'CheminPhoto = "G:\Dir_Commerciale\Textile\commun\03_Administration et Supports\Base de données\Photos collection\ETE 2017\Photos U salon PE17\" & Cells(i, 6) & ".jpg"
+    Sheets("RESULTATS").Pictures.Insert(CheminPhoto).Select 'ouverture image
+    With Selection.ShapeRange
+        .LockAspectRatio = msoTrue 'conserver les proportions
+        .Height = h 'hauteur de l'image 80 top
+        .Left = Cells(I, 25).Offset(0, 0).Left + 2 + Decalage_colonne 'à gauche colonne A (sinon tu calcules avec la largeur de colonne)
+        .Top = Cells(I, 25).Top 'et positionner verticalement
+    End With
+    Position_anterieure = I
+End If
+
+Next I
+
+Application.Goto (Range("A1"))
+
+Exit Sub
+errfich:
+    CheminPhoto = CheminDefaut & "\no_pict.png"
+    Sheets("RESULTATS").Pictures.Insert(CheminPhoto).Select
+    Resume Next
+
+
+End Sub
+
+Sub AffImage(ByVal Chemin As String)
+    ' Sélectionner les cellules contenant un lien vers une image et appeler la macro
+    ' AffImage les affichera sur le lien ou dans la colonne de gauche ou de droite
+    Const hDefaut = 75 ' hauteur des images
+    Const imgDefaut = "" ' saisir chemin complet et le nom de l'image par défaut à afficher si erreur
+    Dim msg As String, r As Long, h As Long, lmax As Long
+    Dim c As Range, numfich As Integer
+    Dim Fichier
+    h = 60
+
+    For I = 2 To Sheets("RESULTATS").Range("A100000").End(xlUp).Row
+    On Error GoTo errfich
+        Columns(23).ColumnWidth = 9.29
+        Fichier = Cells(I, 23)
+        Cells(I, 23).RowHeight = h 'fixer la hauteur de ligne
+
+        Sheets("RESULTATS").Pictures.Insert(Fichier).Select 'ouverture image
+        With Selection.ShapeRange
+            .LockAspectRatio = msoTrue 'conserver les proportions
+            .Height = h - 10 'hauteur de l'image = hauteur des lignes - 4
+            .Left = Cells(I, 1).Offset(0, 0).Left + 2 'à gauche colonne A (sinon tu calcules avec la largeur de colonne)
+            .Top = Cells(I, 1).Top 'et positionner verticalement
+        End With
+        Range("A1").Select
+    Next I
+    Exit Sub
+errfich:
+    Fichier = Chemin & "\logo U.jpg"
+    ActiveSheet.Pictures.Insert(Fichier).Select
+    Resume Next
+End Sub
+
+Sub Surligne_Best()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Rayon As String
+Dim Tx_Revente_Max As Double
+Dim ligne As Long, Ligne_Resultats As Long
+
+'Ligne = Sheets("RESULTATS").Range("D100000").End(xlUp).Row
+
+Columns(2).Copy
+Sheets("TEMP").Activate
+Columns(1).Select
+ActiveSheet.Paste
+Application.CutCopyMode = False
+
+ligne = Sheets("TEMP").Range("A100000").End(xlUp).Row
+ActiveSheet.Range("$A$1:$A$" & ligne).RemoveDuplicates Columns:=1, Header:=xlYes
+
+Ligne_Resultats = Sheets("RESULTATS").Range("D100000").End(xlUp).Row
+For I = 2 To ligne
+    Rayon = Sheets("TEMP").Cells(I, 1)
+    If Not Sheets("RESULTATS").AutoFilterMode Then Sheets("RESULTATS").[A1].AutoFilter
+    Sheets("RESULTATS").[A1].AutoFilter Field:=2, Criteria1:=Rayon
+    Tx_Revente_Max = Application.WorksheetFunction.Subtotal(4, Range(Cells(1, 22), Cells(Ligne_Resultats, 22)))
+Next I
+
+End Sub
+
+
+Sub Macro1()
+'
+' Macro1 Macro
+'
+
+'
+    Range("A2").Select
+    Sheets.Add
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:= _
+        "RESULTATS!R1C1:R97C22", Version:=xlPivotTableVersion15).CreatePivotTable _
+        TableDestination:="Feuil10!R3C1", TableName:="Tableau croisé dynamique2", _
+        DefaultVersion:=xlPivotTableVersion15
+    Sheets("Feuil10").Select
+    Cells(3, 1).Select
+    With ActiveSheet.PivotTables("Tableau croisé dynamique2").PivotFields("Groupe")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    With ActiveSheet.PivotTables("Tableau croisé dynamique2").PivotFields("Rayon")
+        .Orientation = xlRowField
+        .Position = 2
+    End With
+    With ActiveSheet.PivotTables("Tableau croisé dynamique2").PivotFields( _
+        "Catégorie")
+        .Orientation = xlRowField
+        .Position = 3
+    End With
+    With ActiveSheet.PivotTables("Tableau croisé dynamique2")
+        .InGridDropZones = True
+        .RowAxisLayout xlTabularRow
+    End With
+    ActiveSheet.PivotTables("Tableau croisé dynamique2").AddDataField ActiveSheet. _
+        PivotTables("Tableau croisé dynamique2").PivotFields("Quantités engagées"), _
+        "Somme de Quantités engagées", xlSum
+    ActiveSheet.PivotTables("Tableau croisé dynamique2").AddDataField ActiveSheet. _
+        PivotTables("Tableau croisé dynamique2").PivotFields("Quantités ventes"), _
+        "Nombre de Quantités ventes", xlCount
+    ActiveSheet.PivotTables("Tableau croisé dynamique2").AddDataField ActiveSheet. _
+        PivotTables("Tableau croisé dynamique2").PivotFields("CA"), "Nombre de CA", _
+        xlCount
+    With ActiveSheet.PivotTables("Tableau croisé dynamique2").PivotFields( _
+        "Somme de Quantités engagées")
+        .NumberFormat = "# ##0"
+    End With
+    With ActiveSheet.PivotTables("Tableau croisé dynamique2").PivotFields( _
+        "Nombre de Quantités ventes")
+        .Caption = "Somme de Quantités ventes"
+        .Function = xlSum
+        .NumberFormat = "# ##0"
+    End With
+    With ActiveSheet.PivotTables("Tableau croisé dynamique2").PivotFields( _
+        "Nombre de CA")
+        .Caption = "Somme de CA"
+        .Function = xlSum
+        .NumberFormat = "# ##0 €"
+    End With
+    ActiveSheet.PivotTables("Tableau croisé dynamique2").CalculatedFields.Add _
+        "Trvente", "='Quantités ventes'/'Quantités engagées'", True
+    ActiveSheet.PivotTables("Tableau croisé dynamique2").PivotFields("Trvente"). _
+        Orientation = xlDataField
+    With ActiveSheet.PivotTables("Tableau croisé dynamique2").PivotFields( _
+        "Somme de Trvente")
+        .NumberFormat = "0%"
+    End With
+    ActiveSheet.PivotTables("Tableau croisé dynamique2").TableStyle2 = _
+        "PivotStyleMedium6"
+End Sub
+Sub Macro2()
+'
+' Macro2 Macro
+'
+
+'
+    Range("A1:G11").Select
+    Range("G11").Activate
+    Selection.Copy
+    Range("A14").Select
+    ActiveSheet.Paste
+    Range("C19").Select
+    ActiveSheet.PivotTables("Tableau croisé dynamique3").PivotFields("Rayon"). _
+        Orientation = xlHidden
+    ActiveSheet.PivotTables("Tableau croisé dynamique3").PivotFields("Groupe"). _
+        Orientation = xlHidden
+    ActiveSheet.PivotTables("Tableau croisé dynamique3").PivotFields("Catégorie"). _
+        Orientation = xlHidden
+    ActiveSheet.PivotTables("Tableau croisé dynamique3").AddDataField ActiveSheet. _
+        PivotTables("Tableau croisé dynamique3").PivotFields("Num. Photo"), _
+        "Somme de Num. Photo", xlSum
+    ActiveSheet.PivotTables("Tableau croisé dynamique3").PivotFields( _
+        "Somme de Quantités engagées").Orientation = xlHidden
+    ActiveSheet.PivotTables("Tableau croisé dynamique3").AddDataField ActiveSheet. _
+        PivotTables("Tableau croisé dynamique3").PivotFields("Quantités engagées"), _
+        "Somme de Quantités engagées", xlSum
+    With ActiveSheet.PivotTables("Tableau croisé dynamique3").PivotFields( _
+        "Somme de Quantités engagées")
+        .NumberFormat = "# ##0"
+    End With
+    With ActiveSheet.PivotTables("Tableau croisé dynamique3").PivotFields( _
+        "Somme de Num. Photo")
+        .Orientation = xlRowField
+        .Position = 1
+    End With
+    Range("F26").Select
+    Application.CutCopyMode = False
+End Sub
+
+
+
+
+Sub D_EAN_CP()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim EAN_UVC As String
+Dim CP As String
+Dim CA As Double
+Dim Qtes_Ventes As Double, Qtes_Achats As Double
+
+Dim CP_Concat As String
+Dim ligne As Long
+Dim Test_Filtre As Integer
+Dim Cumul As Double
+
+
+Sheets("SIDE").Activate
+For I = 8 To Sheets("SIDE").Range("A100000").End(xlUp).Row
+
+    EAN_UVC = ""
+    ligne = 1
+    CP = ""
+    CA = 0
+    Qtes_Achats = 0
+    Qtes_Ventes = 0
+
+
+    Sheets("SIDE").Activate
+
+
+    EAN_UVC = Cells(I, 3)
+    CA = Cells(I, 5) + Cells(I, 7) + Cells(I, 9) + Cells(I, 11) + Cells(I, 13) + Cells(I, 15)
+    Qtes_Ventes = Cells(I, 6) + Cells(I, 8) + Cells(I, 10) + Cells(I, 12) + Cells(I, 14) + Cells(I, 16)
+
+
+    Sheets("Base").Activate
+    Range("A1").Select
+    Selection.AutoFilter
+    Selection.AutoFilter Field:=4, Criteria1:=EAN_UVC
+    
+
+    Test_Filtre = Sheets("Base").Range("A100000").End(xlUp).Row
+
+
+    'Sheets.Add after:=ActiveSheet
+    'ActiveSheet.Name = "Quick_tract"
+    'Sheets("Quick_tract").Move after:=Sheets(Sheets.Count)
+    
+    
+    If Test_Filtre = 1 Then
+        Sheets("Quick_tract").Cells(I, 1) = EAN_UVC
+        Sheets("Quick_tract").Cells(I, 2) = "CP non trouvé"
+        Sheets("Quick_tract").Cells(I, 3) = CA
+        Sheets("Quick_tract").Cells(I, 4) = Qtes_Ventes
+        Sheets("Quick_tract").Cells(I, 5) = "EAN sans lien COBALT"
+    End If
+
+
+    If Test_Filtre = 2 Then
+
+    CP = Sheets("Base").Cells(Test_Filtre, 13)
+
+    Sheets("SIDO").Activate
+    Range("A9").Select
+    Selection.AutoFilter
+    Selection.AutoFilter Field:=2, Criteria1:=CP
+
+    ligne = Sheets("SIDO").Range("A100000").End(xlUp).Row
+    Qtes_Achats = Sheets("SIDO").Cells(ligne, 6)
+    
+    Sheets("Quick_tract").Cells(I, 1) = EAN_UVC
+    Sheets("Quick_tract").Cells(I, 2) = CP
+    Sheets("Quick_tract").Cells(I, 3) = CA
+    Sheets("Quick_tract").Cells(I, 4) = Qtes_Ventes
+    Sheets("Quick_tract").Cells(I, 5) = Qtes_Achats
+    Sheets("Quick_tract").Cells(I, 6) = CDbl(Qtes_Ventes / Qtes_Achats)
+    Sheets("Quick_tract").Cells(I, 6).NumberFormat = "0.00, %"
+    
+
+    'L = 10
+    'For k = 17 To 21
+    'Sheets("SIDE").Cells(i, k) = CLng(Sheets("SIDO").Cells(Ligne, L))
+    'L = L + 4
+    'Next k
+    
+    End If
+
+
+    If Test_Filtre > 2 Then
+
+    Sheets("TEMP").Select
+    Cells.Select
+    Selection.ClearContents
+    
+    Sheets("Base").Select
+    Columns("M:M").Select
+    Selection.Copy
+    
+    Sheets("TEMP").Select
+    Columns("A:A").Select
+    ActiveSheet.Paste
+        
+    Application.CutCopyMode = False
+    
+    ActiveSheet.Range("$A$1:$A$1047305").RemoveDuplicates Columns:=1, Header:=xlYes
+    
+    m = 2
+    For J = 2 To Sheets("TEMP").Range("A100000").End(xlUp).Row
+    
+        CP = Sheets("TEMP").Cells(J, 1)
+        
+        If CP <> "" Then
+            CP_Concat = CP_Concat & " " & CP
+        End If
+        
+        Sheets("SIDO").Activate
+        Range("A9").Select
+        Selection.AutoFilter
+        Selection.AutoFilter Field:=2, Criteria1:=CP
+        
+        ligne = Sheets("SIDO").Range("A100000").End(xlUp).Row
+        
+        Sheets("TEMP").Activate
+        Sheets("TEMP").Cells(m, 2) = CLng(Sheets("SIDO").Cells(ligne, 6))
+        m = m + 1
+        
+    Next J
+        
+        
+        Sheets("TEMP").Activate
+        ligne = Sheets("TEMP").Range("A100000").End(xlUp).Row
+        
+    For Q = 2 To Sheets("TEMP").Range("A100000").End(xlUp).Row
+            Qtes_Achats = Qtes_Achats + Cells(Q, 2)
+    Next Q
+        
+        Cells(ligne + 1, 2) = Qtes_Achats
+        Qtes_Achats = 0
+        
+        
+'        Ligne = Sheets("TEMP").Range("B100000").End(xlUp).Row
+'        L = 2
+'        Qtes_Ventes = Qtes_Ventes + CLng(Sheets("TEMP").Cells(Ligne, L))
+'        L = L + 1
+'        End If
+
+        
+        Sheets("SIDE").Cells(I, 23) = CP_Concat
+        CP_Concat = ""
+        
+        Sheets("Quick_tract").Cells(I, 1) = EAN_UVC
+        Sheets("Quick_tract").Cells(I, 2) = CP
+        Sheets("Quick_tract").Cells(I, 3) = CA
+        Sheets("Quick_tract").Cells(I, 4) = Qtes_Ventes
+        Sheets("Quick_tract").Cells(I, 5) = Qtes_Achats
+        Sheets("Quick_tract").Cells(I, 6) = CDbl(Qtes_Ventes / Qtes_Achats)
+        Sheets("Quick_tract").Cells(I, 6).NumberFormat = "0.00, %"
+
+Next I
+End Sub
+
+
+Sub E_RESULTAT_TRACT_GLOBAL()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim EAN_UVC As String, CP As String
+Dim CA As Double, Conditionnement As Long
+Dim Qtes_Ventes As Double, Qtes_Achats As Double
+Dim ligne As Long
+Dim EAN_Fait As String
+
+EAN_Fait = ""
+CP = ""
+
+Sheets("RESULTATS").Activate
+ligne = Sheets("RESULTATS").Range("A100000").End(xlUp).Row
+
+ActiveWorkbook.Worksheets("RESULTATS").Sort.SortFields.Clear
+ActiveWorkbook.Worksheets("RESULTATS").Sort.SortFields.Add Key:=Range( _
+    "D2:D" & ligne), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+    xlSortTextAsNumbers
+With ActiveWorkbook.Worksheets("RESULTATS").Sort
+    .SetRange Range("A1:U" & ligne)
+    .Header = xlYes
+    .MatchCase = False
+    .Orientation = xlTopToBottom
+    .SortMethod = xlPinYin
+    .Apply
+End With
+
+For I = 2 To Sheets("RESULTATS").Range("A100000").End(xlUp).Row
+
+    EAN_UVC = ""
+    ligne = 1
+    CA = 0
+    Qtes_Ventes = 0
+    CP = ""
+
+    Sheets("RESULTATS").Activate
+    EAN_UVC = Cells(I, 4)
+    CP = Cells(I, 13)
+    Conditionnement = Cells(I, 11)
+    
+    Sheets("SIDO").Activate
+    Range("A9").Select
+    Selection.AutoFilter
+    Selection.AutoFilter Field:=2, Criteria1:=CP
+        
+    ligne = Sheets("SIDO").Range("A100000").End(xlUp).Row
+    If ligne > 6 Then
+        Qtes_Achats = Sheets("SIDO").Cells(ligne, 5) * Conditionnement
+        Sheets("RESULTATS").Cells(I, 18) = Qtes_Achats
+    End If
+    
+    If EAN_UVC <> EAN_Fait Then
+        Sheets("SIDE").Activate
+        Range("A7").Select
+        Selection.AutoFilter
+        Selection.AutoFilter Field:=3, Criteria1:=EAN_UVC
+        
+        ligne = Sheets("SIDE").Range("A100000").End(xlUp).Row
+        
+        If ligne > 6 Then
+        
+        CA = Cells(ligne, 5) + Cells(ligne, 7) + Cells(ligne, 9) + Cells(ligne, 11) + Cells(ligne, 13) + Cells(ligne, 15)
+        Qtes_Ventes = Cells(ligne, 6) + Cells(ligne, 8) + Cells(ligne, 10) + Cells(ligne, 12) + Cells(ligne, 14) + Cells(ligne, 16)
+    
+        Sheets("RESULTATS").Activate
+        Cells(I, 20) = CA
+        Cells(I, 19) = Qtes_Ventes
+        End If
+        EAN_Fait = EAN_UVC
+    End If
+Next I
+
+Sheets("SIDO").Activate
+Range("A9").Select
+Selection.AutoFilter
+
+Sheets("SIDE").Activate
+Range("A7").Select
+Selection.AutoFilter
+
+End Sub
+
+
+Sub E_RESULTAT_TRACT_TR_GLOBAL()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim CP1 As String, CP2 As String
+Dim EAN1 As String, EAN2 As String
+Dim Qtes_Achats_Tot As Double, Qtes_Ventes_Tot As Double
+Dim ligne As Long, Marqueur As Long
+
+Qtes_Achats_Tot = 0
+Qtes_Ventes_Tot = 0
+CP1 = ""
+CP2 = ""
+EAN1 = ""
+EAN2 = ""
+Marqueur = 1
+
+Sheets("RESULTATS").Activate
+
+For I = 2 To Sheets("RESULTATS").Range("A100000").End(xlUp).Row
+
+    ligne = 1
+    CP1 = ""
+    CP2 = ""
+    EAN1 = ""
+    EAN2 = ""
+
+    Sheets("RESULTATS").Activate
+
+    CP1 = Cells(I, 13)
+    CP2 = Cells(I + 1, 13)
+    
+    EAN1 = Cells(I, 4)
+    EAN2 = Cells(I + 1, 4)
+    
+    
+    Qtes_Achats_Tot = Qtes_Achats_Tot + Cells(I, 18)
+    
+    If Cells(I, 19) <> "" Then
+        Qtes_Ventes_Tot = Cells(I, 19)
+        Marqueur = I
+    End If
+ 
+    If CP1 <> CP2 And EAN1 <> EAN2 And Qtes_Achats_Tot > 0 Then
+        Cells(Marqueur, 21) = Qtes_Ventes_Tot / Qtes_Achats_Tot
+        Cells(Marqueur, 21).Style = "Percent"
+        Cells(Marqueur, 21).NumberFormat = "0.0%"
+        
+        Qtes_Ventes_Tot = 0
+        Qtes_Achats_Tot = 0
+    End If
+
+Next I
+
+End Sub
+
+Sub E_RESULTAT_TRACT_HU2()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim EAN_UVC As String, CP As String
+Dim CA As Double, Conditionnement As Long
+Dim Qtes_Ventes As Double, Qtes_Achats As Double
+Dim ligne As Long
+Dim EAN_Fait As String
+
+EAN_Fait = ""
+CP = ""
+
+Sheets("RESULTATS").Activate
+ligne = Sheets("RESULTATS").Range("A100000").End(xlUp).Row
+
+ActiveWorkbook.Worksheets("RESULTATS").Sort.SortFields.Clear
+ActiveWorkbook.Worksheets("RESULTATS").Sort.SortFields.Add Key:=Range( _
+    "D2:D" & ligne), SortOn:=xlSortOnValues, Order:=xlAscending, DataOption:= _
+    xlSortTextAsNumbers
+With ActiveWorkbook.Worksheets("RESULTATS").Sort
+    .SetRange Range("A1:U" & ligne)
+    .Header = xlYes
+    .MatchCase = False
+    .Orientation = xlTopToBottom
+    .SortMethod = xlPinYin
+    .Apply
+End With
+
+For I = 2 To Sheets("RESULTATS").Range("A100000").End(xlUp).Row
+
+    EAN_UVC = ""
+    ligne = 1
+    CA = 0
+    Qtes_Ventes = 0
+    CP = ""
+
+    Sheets("RESULTATS").Activate
+    EAN_UVC = Cells(I, 4)
+    CP = Cells(I, 13)
+    Conditionnement = Cells(I, 11)
+    
+    Sheets("SIDO").Activate
+    Range("A9").Select
+    Selection.AutoFilter
+    Selection.AutoFilter Field:=2, Criteria1:=CP
+        
+    ligne = Sheets("SIDO").Range("A100000").End(xlUp).Row
+    If ligne > 6 Then
+        Qtes_Achats = Sheets("SIDO").Cells(ligne, 9) * Conditionnement
+        Sheets("RESULTATS").Cells(I, 22) = Qtes_Achats
+    End If
+    
+    
+    If EAN_UVC <> EAN_Fait Then
+        Sheets("SIDE").Activate
+        Range("A7").Select
+        Selection.AutoFilter
+        Selection.AutoFilter Field:=3, Criteria1:=EAN_UVC
+        
+        ligne = Sheets("SIDE").Range("A100000").End(xlUp).Row
+        
+        If ligne > 6 Then
+        
+        CA = Cells(ligne, 5)
+        Qtes_Ventes = Cells(ligne, 6)
+    
+        Sheets("RESULTATS").Activate
+        Cells(I, 24) = CA
+        Cells(I, 23) = Qtes_Ventes
+        End If
+        EAN_Fait = EAN_UVC
+    End If
+Next I
+
+Sheets("SIDO").Activate
+Range("A9").Select
+Selection.AutoFilter
+
+Sheets("SIDE").Activate
+Range("A7").Select
+Selection.AutoFilter
+
+End Sub
+
+
+Sub E_RESULTAT_TRACT_TR_HU2()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim CP1 As String, CP2 As String
+Dim EAN1 As String, EAN2 As String
+Dim Qtes_Achats_Tot As Double, Qtes_Ventes_Tot As Double
+Dim ligne As Long, Marqueur As Long
+
+Qtes_Achats_Tot = 0
+Qtes_Ventes_Tot = 0
+CP1 = ""
+CP2 = ""
+EAN1 = ""
+EAN2 = ""
+Marqueur = 1
+
+Sheets("RESULTATS").Activate
+
+For I = 2 To Sheets("RESULTATS").Range("A100000").End(xlUp).Row
+
+    ligne = 1
+    CP1 = ""
+    CP2 = ""
+    EAN1 = ""
+    EAN2 = ""
+
+    Sheets("RESULTATS").Activate
+
+    CP1 = Cells(I, 13)
+    CP2 = Cells(I + 1, 13)
+    
+    EAN1 = Cells(I, 4)
+    EAN2 = Cells(I + 1, 4)
+    
+    
+    Qtes_Achats_Tot = Qtes_Achats_Tot + Cells(I, 22)
+    
+    If Cells(I, 23) <> "" Then
+        Qtes_Ventes_Tot = Cells(I, 23)
+        Marqueur = I
+    End If
+ 
+    If CP1 <> CP2 And EAN1 <> EAN2 And Qtes_Achats_Tot > 0 Then
+        Cells(Marqueur, 25) = Qtes_Ventes_Tot / Qtes_Achats_Tot
+        Cells(Marqueur, 25).Style = "Percent"
+        Cells(Marqueur, 25).NumberFormat = "0.0%"
+        
+        Qtes_Ventes_Tot = 0
+        Qtes_Achats_Tot = 0
+    End If
+
+Next I
+
+End Sub
+
+
+
