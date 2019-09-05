@@ -1,0 +1,834 @@
+Attribute VB_Name = "A_TDB"
+Sub Suppr_All_Pict()
+    Acti.DrawingObjects.Delete
+End Sub
+
+Function NOSEM(ByVal D As Date) As Long
+   D = Int(D)
+   NOSEM = DateSerial(Year(D + (8 - Weekday(D)) Mod 7 - 3), 1, 1)
+   NOSEM = ((D - NOSEM - 3 + (Weekday(NOSEM) + 1) Mod 7)) \ 7 + 1
+End Function
+Sub Valide_Filtre()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Call FILTRE_SIDE
+Call FILTRE_IRI
+
+End Sub
+Sub Supprime_menu_annee_mois_semaine()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Sheets("TDB").Activate
+Sheets("TDB").Cells(1, 2) = ""
+Sheets("TDB").Cells(2, 2) = ""
+Sheets("TDB").Cells(3, 2) = ""
+
+End Sub
+
+Sub Supprime_menu_periode()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Sheets("TDB").Activate
+Sheets("TDB").Cells(2, 7) = ""
+Sheets("TDB").Cells(2, 8) = ""
+
+End Sub
+
+
+Sub A_Retraitement_Export_SIDE()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Date_extract As Date
+
+Sheets("SIDE").Activate
+ActiveWindow.Zoom = 85
+
+Sheets("SIDE").Columns("A:E").Insert Shift:=xlToRight
+Cells(7, 1) = "Selecteur"
+Cells(7, 2) = "Code_Date"
+Cells(7, 3) = "AnnÈe"
+Cells(7, 4) = "Mois"
+Cells(7, 5) = "Semaine"
+
+For I = 8 To Sheets("SIDE").Range("F100000").End(xlUp).Row
+    Date_extract = Cells(I, 6)
+    Cells(I, 5) = NOSEM(Date_extract)
+    Cells(I, 4) = DatePart("m", Date_extract)
+    Cells(I, 3) = DatePart("yyyy", Date_extract)
+    Cells(I, 2) = Date_extract
+Next I
+
+End Sub
+
+
+Sub A_Retraitement_Export_IRI()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Date_extract As Date
+
+Sheets("IRI").Activate
+ActiveWindow.Zoom = 85
+
+Sheets("IRI").Columns("A:D").Insert Shift:=xlToRight
+Cells(8, 1) = "Date"
+Cells(8, 2) = "AnnÈe"
+Cells(8, 3) = "Mois"
+Cells(8, 4) = "Semaine"
+
+For I = 9 To Sheets("IRI").Range("E100000").End(xlUp).Row
+    Date_extract = Right(Cells(I, 5), 10)
+    Date_extract = Replace(Date_extract, "-", "/")
+    Cells(I, 4) = NOSEM(Date_extract)
+    Cells(I, 3) = DatePart("m", Date_extract)
+    Cells(I, 2) = DatePart("yyyy", Date_extract)
+    Cells(I, 1) = Date_extract
+    'Cells(i, 1) = Cells(i, 2) & " - " & Cells(i, 4)
+Next I
+
+End Sub
+
+Sub Ajout_Indicateurs_Export_IRI()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Cat As String
+Dim Pointeur_Colonne As Integer
+Dim Cat_MarchÈ_Evol_Percent As Double
+Dim PMU_MarchÈ_2017 As Double
+Dim PMU_MarchÈ_Evol_Euros As Double
+Dim PMU_MarchÈ_Evol_Percent As Double
+Dim PMU_MarchÈ_2017_Max As Double
+Dim PMU_MarchÈ_2017_Min As Double
+
+Dim PMU_SU_2017 As Double
+Dim PMU_SU_Evol_Euros As Double
+Dim PMU_SU_Evol_Percent As Double
+Dim PMU_SU_2017_Max As Double
+Dim PMU_SU_2017_Min As Double
+
+Dim Mois As Integer, AnnÈe As Integer, Semaine As Integer
+Dim ligne As Long
+
+ligne = Sheets(1).Range("D100000").End(xlUp).Row
+
+For J = 5 To Sheets(1).Range("ZZ1").End(xlToLeft).Column
+    For I = 9 To Sheets(1).Range("A100000").End(xlUp).Row
+
+    Cat = Cells(7, J)
+    Cells(7, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = Cat
+    
+    Cat_MarchÈ_Evol_Percent = Cells(I, J + 1) / Cells(I, J) - 1
+    Cells(8, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = "Cat_MarchÈ_Evol_Percent"
+    Cells(I, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = Cat_MarchÈ_Evol_Percent
+    
+    PMU_MarchÈ_Euros = Cells(I, J + 3) - Cells(I, J + 2)
+    Cells(8, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = "PMU_MarchÈ_Euros"
+    Cells(I, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = PMU_MarchÈ_Euros
+    
+    PMU_MarchÈ_Percent = Cells(I, J + 3) / Cells(I, J + 2) - 1
+    Cells(8, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = "PMU_MarchÈ_Percent"
+    Cells(I, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = PMU_MarchÈ_Percent
+    
+    PMU_SU_2017 = Cells(I, 60 + J + 3)
+    Cells(8, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = "PMU_SU_2017"
+    Cells(I, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = PMU_SU_2017
+    
+    PMU_SU_Evol_Euros = Cells(I, 60 + J + 3) - Cells(I, 60 + J + 2)
+    Cells(8, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = "PMU_SU_Evol_Euros"
+    Cells(I, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = PMU_SU_Evol_Euros
+    
+    PMU_SU_Evol_Percent = Cells(I, 60 + J + 3) / Cells(I, 60 + J + 2) - 1
+    Cells(8, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = "PMU_SU_Evol_Percent"
+    Cells(I, Sheets(1).Range("ZZ" & I).End(xlToLeft).Column + 1) = PMU_SU_Evol_Percent
+    
+    Next I
+    J = J + 3
+Next J
+
+
+Selection.AutoFilter
+
+End Sub
+
+
+Sub FILTRE_SIDE()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Cat As String
+Dim Pointeur_Rayon As Integer, Ligne_Ecriture As Integer
+Dim CA_N_1 As Double, CA_N As Double, Evol_CA_Eur As Double, Evol_CA_Per As Double
+Dim QV_N As Double, QV_N_1 As Double, Evol_QV_UVC As Long, Evol_QV_Per As Double
+Dim PMU_N As Double, Evol_PMU_Eur As Double, Evol_PMU_Per As Double
+Dim PDV_N As Long, PDV_N_1 As Long, Evol_PDV_PDV As Long, Evol_PDV_Per As Double
+Dim CA_PDV_N As Double, CA_PDV_N_1 As Double, Evol_CA_PDV_Per As Double
+Dim SelecteurD As String, Date_Debut As Date
+Dim SelecteurF As String, Date_Fin As Date
+Dim AnnÈe_Menu As Integer, Mois_Menu As String, Semaine_Menu As String
+Dim Mois As Integer, AnnÈe As Integer, Semaine As Integer, Mois_D As Integer, AnnÈe_D As Integer, Mois_F As Integer, AnnÈe_F As Integer, jour_F
+Dim ligne As Long
+Dim Panier_N As Double, Panier_N_1 As Double, Evol_Panier_Eur As Double, Evol_Panier_Per As Double
+Dim Passage_N As Double, Passage_N_1 As Double, Evol_Passage_Passage As Double, Evol_Passage_Per As Double
+Dim CA_Anime_N_1 As Double, CA_Anime_N As Double, Evol_CA_Anim_Eur As Double, Evol_CA_Anime_Per As Double
+Dim QV_Anime_N As Double, QV_Anime_N_1 As Double, Evol_QV_Anime_UVC As Long, Evol_QV_Anime_Per As Double
+Dim PDV_Anime_N As Long, PDV_Anime_N_1 As Long, Evol_PDV_Anime_PDV As Long, Evol_PDV_Anime_Per As Double
+Dim CA_Anime_PDV_N As Double, CA_Anime_PDV_N_1 As Double, Evol_CA_Anime_PDV_Per As Double
+Dim Part_CA_Anime_N_1 As Double, Part_CA_Anime_N As Double
+Dim Date_Deb_A As String, Date_Fin_A As String, Date_Deb_A_1 As String, Date_Fin_A_1 As String
+
+Sheets("SIDE").Activate
+ligne = Sheets("SIDE").Range("F100000").End(xlUp).Row
+
+Cat = ""
+Mois_Menu = ""
+Semaine_Menu = ""
+AnnÈe = 0
+
+SelecteurD = Sheets("TDB").Cells(2, 7)
+SelecteurF = Sheets("TDB").Cells(2, 8)
+
+AnnÈe_Menu = Sheets("TDB").Cells(1, 2)
+Mois_Menu = Sheets("TDB").Cells(2, 2)
+Semaine_Menu = Sheets("TDB").Cells(3, 2)
+
+Date_Deb_A = Sheets("TDB").Cells(1, 4)
+Date_Fin_A = Sheets("TDB").Cells(1, 5)
+Date_Deb_A_1 = Sheets("TDB").Cells(2, 4)
+Date_Fin_A_1 = Sheets("TDB").Cells(2, 5)
+
+
+For Pointeur_Rayon = 7 To 36
+    CA_N = 0: QV_N = 0: CA_N_1 = 0: QV_N_1 = 0: Evol_CA_Eur = 0: Evol_CA_Per = 0: Evol_QV_UVC = 0: Evol_QV_Per = 0: PMU_N = 0: PMU_N_1 = 0: Evol_PMU_Eur = 0: Evol_PMU_Per = 0
+    If SelecteurD <> "" And SelecteurF <> "" Then
+        Select Case SelecteurD
+            Case "2015 - Janvier": Date_Debut = DateSerial(2015, 1, 1): Mois_D = 1: AnnÈe_D = 2015
+            Case "2015 - FÈvrier": Date_Debut = DateSerial(2015, 2, 1): Mois_D = 2: AnnÈe_D = 2015
+            Case "2015 - Mars": Date_Debut = DateSerial(2015, 3, 1): Mois_D = 3: AnnÈe_D = 2015
+            Case "2015 - Avril": Date_Debut = DateSerial(2015, 4, 1): Mois_D = 4: AnnÈe_D = 2015
+            Case "2015 - Mai": Date_Debut = DateSerial(2015, 5, 1): Mois_D = 5: AnnÈe_D = 2015
+            Case "2015 - Juin": Date_Debut = DateSerial(2015, 6, 1): Mois_D = 6: AnnÈe_D = 2015
+            Case "2015 - Juillet": Date_Debut = DateSerial(2015, 7, 1): Mois_D = 7: AnnÈe_D = 2015
+            Case "2015 - Ao˚t": Date_Debut = DateSerial(2015, 8, 1): Mois_D = 8: AnnÈe_D = 2015
+            Case "2015 - Septembre": Date_Debut = DateSerial(2015, 9, 1): Mois_D = 9: AnnÈe_D = 2015
+            Case "2015 - Octobre": Date_Debut = DateSerial(2015, 10, 1): Mois_D = 10: AnnÈe_D = 2015
+            Case "2015 - Novembre": Date_Debut = DateSerial(2015, 11, 1): Mois_D = 11: AnnÈe_D = 2015
+            Case "2015 - DÈcembre": Date_Debut = DateSerial(2015, 12, 1): Mois_D = 12: AnnÈe_D = 2015
+            Case "2016 - Janvier": Date_Debut = DateSerial(2016, 1, 1): Mois_D = 1: AnnÈe_D = 2016
+            Case "2016 - FÈvrier": Date_Debut = DateSerial(2016, 2, 1): Mois_D = 2: AnnÈe_D = 2016
+            Case "2016 - Mars": Date_Debut = DateSerial(2016, 3, 1): Mois_D = 3: AnnÈe_D = 2016
+            Case "2016 - Avril": Date_Debut = DateSerial(2016, 4, 1): Mois_D = 4: AnnÈe_D = 2016
+            Case "2016 - Mai": Date_Debut = DateSerial(2016, 5, 1): Mois_D = 5: AnnÈe_D = 2016
+            Case "2016 - Juin": Date_Debut = DateSerial(2016, 6, 1): Mois_D = 6: AnnÈe_D = 2016
+            Case "2016 - Juillet": Date_Debut = DateSerial(2016, 7, 1): Mois_D = 7: AnnÈe_D = 2016
+            Case "2016 - Ao˚t": Date_Debut = DateSerial(2016, 8, 1): Mois_D = 8: AnnÈe_D = 2016
+            Case "2016 - Septembre": Date_Debut = DateSerial(2016, 9, 1): Mois_D = 9: AnnÈe_D = 2016
+            Case "2016 - Octobre": Date_Debut = DateSerial(2016, 10, 1): Mois_D = 10: AnnÈe_D = 2016
+            Case "2016 - Novembre": Date_Debut = DateSerial(2016, 11, 1): Mois_D = 11: AnnÈe_D = 2016
+            Case "2016 - DÈcembre": Date_Debut = DateSerial(2016, 12, 1): Mois_D = 12: AnnÈe_D = 2016
+            Case "2017 - Janvier": Date_Debut = DateSerial(2017, 1, 1): Mois_D = 1: AnnÈe_D = 2017
+            Case "2017 - FÈvrier": Date_Debut = DateSerial(2017, 2, 1): Mois_D = 2: AnnÈe_D = 2017
+            Case "2017 - Mars": Date_Debut = DateSerial(2017, 3, 1): Mois_D = 3: AnnÈe_D = 2017
+            Case "2017 - Avril": Date_Debut = DateSerial(2017, 4, 1): Mois_D = 4: AnnÈe_D = 2017
+            Case "2017 - Mai": Date_Debut = DateSerial(2017, 5, 1): Mois_D = 5: AnnÈe_D = 2017
+            Case "2017 - Juin": Date_Debut = DateSerial(2017, 6, 1): Mois_D = 6: AnnÈe_D = 2017
+            Case "2017 - Juillet": Date_Debut = DateSerial(2017, 7, 1): Mois_D = 7: AnnÈe_D = 2017
+            Case "2017 - Ao˚t": Date_Debut = DateSerial(2017, 8, 1): Mois_D = 8: AnnÈe_D = 2017
+            Case "2017 - Septembre": Date_Debut = DateSerial(2017, 9, 1): Mois_D = 9: AnnÈe_D = 2017
+            Case "2017 - Octobre": Date_Debut = DateSerial(2017, 10, 1): Mois_D = 10: AnnÈe_D = 2017
+            Case "2017 - Novembre": Date_Debut = DateSerial(2017, 11, 1): Mois_D = 11: AnnÈe_D = 2017
+            Case "2017 - DÈcembre": Date_Debut = DateSerial(2017, 12, 1): Mois_D = 12: AnnÈe_D = 2017
+        End Select
+        
+        Select Case SelecteurF
+            Case "2015 - Janvier": Date_Fin = DateSerial(2015, 1, 31): Mois_F = 1: AnnÈe_F = 2015
+            Case "2015 - FÈvrier": Date_Fin = DateSerial(2015, 2, 28): Mois_F = 2: AnnÈe_F = 2015
+            Case "2015 - Mars": Date_Fin = DateSerial(2015, 3, 31): Mois_F = 3: AnnÈe_F = 2015
+            Case "2015 - Avril": Date_Fin = DateSerial(2015, 4, 30): Mois_F = 4: AnnÈe_F = 2015
+            Case "2015 - Mai": Date_Fin = DateSerial(2015, 5, 31): Mois_F = 5: AnnÈe_F = 2015
+            Case "2015 - Juin": Date_Fin = DateSerial(2015, 6, 30): Mois_F = 6: AnnÈe_F = 2015
+            Case "2015 - Juillet": Date_Fin = DateSerial(2015, 7, 31): Mois_F = 7: AnnÈe_F = 2015
+            Case "2015 - Ao˚t": Date_Fin = DateSerial(2015, 8, 31): Mois_F = 8: AnnÈe_F = 2015
+            Case "2015 - Septembre": Date_Fin = DateSerial(2015, 9, 30): Mois_F = 9: AnnÈe_F = 2015
+            Case "2015 - Octobre": Date_Fin = DateSerial(2015, 10, 31): Mois_F = 10: AnnÈe_F = 2015
+            Case "2015 - Novembre": Date_Fin = DateSerial(2015, 11, 30): Mois_F = 11: AnnÈe_F = 2015
+            Case "2015 - DÈcembre": Date_Fin = DateSerial(2015, 12, 31): Mois_F = 12: AnnÈe_F = 2015
+            Case "2016 - Janvier": Date_Fin = DateSerial(2016, 1, 31): Mois_F = 1: AnnÈe_F = 2016
+            Case "2016 - FÈvrier": Date_Fin = DateSerial(2016, 2, 29): Mois_F = 2: AnnÈe_F = 2016
+            Case "2016 - Mars": Date_Fin = DateSerial(2016, 3, 31): Mois_F = 3: AnnÈe_F = 2016
+            Case "2016 - Avril": Date_Fin = DateSerial(2016, 4, 30): Mois_F = 4: AnnÈe_F = 2016
+            Case "2016 - Mai": Date_Fin = DateSerial(2016, 5, 31): Mois_F = 5: AnnÈe_F = 2016
+            Case "2016 - Juin": Date_Fin = DateSerial(2016, 6, 30): Mois_F = 6: AnnÈe_F = 2016
+            Case "2016 - Juillet": Date_Fin = DateSerial(2016, 7, 31): Mois_F = 7: AnnÈe_F = 2016
+            Case "2016 - Ao˚t": Date_Fin = DateSerial(2016, 8, 31): Mois_F = 8: AnnÈe_F = 2016
+            Case "2016 - Septembre": Date_Fin = DateSerial(2016, 9, 30): Mois_F = 9: AnnÈe_F = 2016
+            Case "2016 - Octobre": Date_Fin = DateSerial(2016, 10, 31): Mois_F = 10: AnnÈe_F = 2016
+            Case "2016 - Novembre": Date_Fin = DateSerial(2016, 11, 30): Mois_F = 11: AnnÈe_F = 2016
+            Case "2016 - DÈcembre": Date_Fin = DateSerial(2016, 12, 31): Mois_F = 12: AnnÈe_F = 2016
+            Case "2017 - Janvier": Date_Fin = DateSerial(2017, 1, 31): Mois_F = 1: AnnÈe_F = 2017
+            Case "2017 - FÈvrier": Date_Fin = DateSerial(2017, 2, 28): Mois_F = 2: AnnÈe_F = 2017
+            Case "2017 - Mars": Date_Fin = DateSerial(2017, 3, 31): Mois_F = 3: AnnÈe_F = 2017
+            Case "2017 - Avril": Date_Fin = DateSerial(2017, 4, 30): Mois_F = 4: AnnÈe_F = 2017
+            Case "2017 - Mai": Date_Fin = DateSerial(2017, 5, 31): Mois_F = 5: AnnÈe_F = 2017
+            Case "2017 - Juin": Date_Fin = DateSerial(2017, 6, 30): Mois_F = 6: AnnÈe_F = 2017
+            Case "2017 - Juillet": Date_Fin = DateSerial(2017, 7, 31): Mois_F = 7: AnnÈe_F = 2017
+            Case "2017 - Ao˚t": Date_Fin = DateSerial(2017, 8, 31): Mois_F = 8: AnnÈe_F = 2017
+            Case "2017 - Septembre": Date_Fin = DateSerial(2017, 9, 30): Mois_F = 9: AnnÈe_F = 2017
+            Case "2017 - Octobre": Date_Fin = DateSerial(2017, 10, 31): Mois_F = 10: AnnÈe_F = 2017
+            Case "2017 - Novembre": Date_Fin = DateSerial(2017, 11, 30): Mois_F = 11: AnnÈe_F = 2017
+            Case "2017 - DÈcembre": Date_Fin = DateSerial(2017, 12, 31): Mois_F = 12: AnnÈe_F = 2017
+        End Select
+        
+        Sheets("SIDE").[A7].AutoFilter
+        Sheets("SIDE").[A7].AutoFilter Field:=6, Criteria1:=">=" & Format(Date_Debut, "mm/dd/yyyy"), Operator:=xlAnd, Criteria2:="<=" & Format(Date_Fin, "mm/dd/yyyy")
+
+        ElseIf AnnÈe_Menu <> 0 Then: AnnÈe = AnnÈe_Menu: Sheets("SIDE").[A7].AutoFilter: Sheets("SIDE").[A7].AutoFilter Field:=3, Criteria1:=AnnÈe
+        ElseIf Mois_Menu <> "" Then
+        Select Case Mois_Menu
+            Case "2015 - Janvier": Date_Debut = DateSerial(2015, 1, 1): Mois = 1: AnnÈe = 2015
+            Case "2015 - FÈvrier": Date_Debut = DateSerial(2015, 2, 1): Mois = 2: AnnÈe = 2015
+            Case "2015 - Mars": Date_Debut = DateSerial(2015, 3, 1): Mois = 3: AnnÈe = 2015
+            Case "2015 - Avril": Date_Debut = DateSerial(2015, 4, 1): Mois = 4: AnnÈe = 2015
+            Case "2015 - Mai": Date_Debut = DateSerial(2015, 5, 1): Mois = 5: AnnÈe = 2015
+            Case "2015 - Juin": Date_Debut = DateSerial(2015, 6, 1): Mois = 6: AnnÈe = 2015
+            Case "2015 - Juillet": Date_Debut = DateSerial(2015, 7, 1): Mois = 7: AnnÈe = 2015
+            Case "2015 - Ao˚t": Date_Debut = DateSerial(2015, 8, 1): Mois = 8: AnnÈe = 2015
+            Case "2015 - Septembre": Date_Debut = DateSerial(2015, 9, 1): Mois = 9: AnnÈe = 2015
+            Case "2015 - Octobre": Date_Debut = DateSerial(2015, 10, 1): Mois = 10: AnnÈe = 2015
+            Case "2015 - Novembre": Date_Debut = DateSerial(2015, 11, 1): Mois = 11: AnnÈe = 2015
+            Case "2015 - DÈcembre": Date_Debut = DateSerial(2015, 12, 1): Mois = 12: AnnÈe = 2015
+            Case "2016 - Janvier": Date_Debut = DateSerial(2016, 1, 1): Mois = 1: AnnÈe = 2016
+            Case "2016 - FÈvrier": Date_Debut = DateSerial(2016, 2, 1): Mois = 2: AnnÈe = 2016
+            Case "2016 - Mars": Date_Debut = DateSerial(2016, 3, 1): Mois = 3: AnnÈe = 2016
+            Case "2016 - Avril": Date_Debut = DateSerial(2016, 4, 1): Mois = 4: AnnÈe = 2016
+            Case "2016 - Mai": Date_Debut = DateSerial(2016, 5, 1): Mois = 5: AnnÈe = 2016
+            Case "2016 - Juin": Date_Debut = DateSerial(2016, 6, 1): Mois = 6: AnnÈe = 2016
+            Case "2016 - Juillet": Date_Debut = DateSerial(2016, 7, 1): Mois = 7: AnnÈe = 2016
+            Case "2016 - Ao˚t": Date_Debut = DateSerial(2016, 8, 1): Mois = 8: AnnÈe = 2016
+            Case "2016 - Septembre": Date_Debut = DateSerial(2016, 9, 1): Mois = 9: AnnÈe = 2016
+            Case "2016 - Octobre": Date_Debut = DateSerial(2016, 10, 1): Mois = 10: AnnÈe = 2016
+            Case "2016 - Novembre": Date_Debut = DateSerial(2016, 11, 1): Mois = 11: AnnÈe = 2016
+            Case "2016 - DÈcembre": Date_Debut = DateSerial(2016, 12, 1): Mois = 12: AnnÈe = 2016
+            Case "2017 - Janvier": Date_Debut = DateSerial(2017, 1, 1): Mois = 1: AnnÈe = 2017
+            Case "2017 - FÈvrier": Date_Debut = DateSerial(2017, 2, 1): Mois = 2: AnnÈe = 2017
+            Case "2017 - Mars": Date_Debut = DateSerial(2017, 3, 1): Mois = 3: AnnÈe = 2017
+            Case "2017 - Avril": Date_Debut = DateSerial(2017, 4, 1): Mois = 4: AnnÈe = 2017
+            Case "2017 - Mai": Date_Debut = DateSerial(2017, 5, 1): Mois = 5: AnnÈe = 2017
+            Case "2017 - Juin": Date_Debut = DateSerial(2017, 6, 1): Mois = 6: AnnÈe = 2017
+            Case "2017 - Juillet": Date_Debut = DateSerial(2017, 7, 1): Mois = 7: AnnÈe = 2017
+            Case "2017 - Ao˚t": Date_Debut = DateSerial(2017, 8, 1): Mois = 8: AnnÈe = 2017
+            Case "2017 - Septembre": Date_Debut = DateSerial(2017, 9, 1): Mois = 9: AnnÈe = 2017
+            Case "2017 - Octobre": Date_Debut = DateSerial(2017, 10, 1): Mois = 10: AnnÈe = 2017
+            Case "2017 - Novembre": Date_Debut = DateSerial(2017, 11, 1): Mois = 11: AnnÈe = 2017
+            Case "2017 - DÈcembre": Date_Debut = DateSerial(2017, 12, 1): Mois = 12: AnnÈe = 2017
+        End Select
+        Sheets("SIDE").[A7].AutoFilter: Sheets("SIDE").[A7].AutoFilter Field:=4, Criteria1:=Mois: Sheets("SIDE").[A7].AutoFilter Field:=3, Criteria1:=AnnÈe
+        
+        ElseIf Semaine_Menu <> "" Then
+        Select Case Semaine_Menu
+            Case "2017 - S1": Semaine = 1: AnnÈe = 2017
+            Case "2017 - S2": Semaine = 2: AnnÈe = 2017
+            Case "2017 - S3": Semaine = 3: AnnÈe = 2017
+            Case "2017 - S4": Semaine = 4: AnnÈe = 2017
+            Case "2017 - S5": Semaine = 5: AnnÈe = 2017
+            Case "2017 - S6": Semaine = 6: AnnÈe = 2017
+            Case "2017 - S7": Semaine = 7: AnnÈe = 2017
+            Case "2017 - S8": Semaine = 8: AnnÈe = 2017
+            Case "2017 - S9": Semaine = 9: AnnÈe = 2017
+            Case "2017 - S10": Semaine = 10: AnnÈe = 2017
+            Case "2017 - S11": Semaine = 11: AnnÈe = 2017
+            Case "2017 - S12": Semaine = 12: AnnÈe = 2017
+            Case "2017 - S13": Semaine = 13: AnnÈe = 2017
+            Case "2017 - S14": Semaine = 14: AnnÈe = 2017
+            Case "2017 - S15": Semaine = 15: AnnÈe = 2017
+            Case "2017 - S16": Semaine = 16: AnnÈe = 2017
+            Case "2017 - S17": Semaine = 17: AnnÈe = 2017
+            Case "2017 - S18": Semaine = 18: AnnÈe = 2017
+            Case "2017 - S19": Semaine = 19: AnnÈe = 2017
+            Case "2017 - S20": Semaine = 20: AnnÈe = 2017
+            Case "2017 - S21": Semaine = 21: AnnÈe = 2017
+            Case "2017 - S22": Semaine = 22: AnnÈe = 2017
+            Case "2017 - S23": Semaine = 23: AnnÈe = 2017
+            Case "2017 - S24": Semaine = 24: AnnÈe = 2017
+            Case "2017 - S25": Semaine = 25: AnnÈe = 2017
+            Case "2017 - S26": Semaine = 26: AnnÈe = 2017
+            Case "2017 - S27": Semaine = 27: AnnÈe = 2017
+            Case "2017 - S28": Semaine = 28: AnnÈe = 2017
+            Case "2017 - S28": Semaine = 29: AnnÈe = 2017
+            Case "2017 - S28": Semaine = 30: AnnÈe = 2017
+            Case "2017 - S28": Semaine = 31: AnnÈe = 2017
+        End Select
+            Sheets("SIDE").[A7].AutoFilter
+            Sheets("SIDE").[A7].AutoFilter Field:=3, Criteria1:=AnnÈe
+            Sheets("SIDE").[A7].AutoFilter Field:=5, Criteria1:=Semaine
+        ElseIf Date_Deb_A <> "" And Date_Fin_A <> "" And Date_Deb_A_1 <> "" And Date_Fin_A_1 <> "" Then
+            Sheets("SIDE").[A7].AutoFilter
+            Sheets("SIDE").[A7].AutoFilter Field:=6, Criteria1:=">=" & Format(Date_Deb_A, "mm/dd/yyyy"), Operator:=xlAnd, Criteria2:="<=" & Format(Date_Fin_A, "mm/dd/yyyy")
+        End If
+        
+        Cat = Sheets("SIDE").Cells(7, Pointeur_Rayon)
+        
+        Sheets("SIDE").Activate
+        CA_N = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon), Cells(ligne, Pointeur_Rayon)))
+        QV_N = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 30), Cells(ligne, Pointeur_Rayon + 30)))
+        PDV_N = Application.WorksheetFunction.Subtotal(4, Range(Cells(1, Pointeur_Rayon + 60), Cells(ligne, Pointeur_Rayon + 60)))
+        Panier_N = Application.WorksheetFunction.Subtotal(4, Range(Cells(1, Pointeur_Rayon + 180), Cells(ligne, Pointeur_Rayon + 180)))
+        Passage_N = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 210), Cells(ligne, Pointeur_Rayon + 210)))
+        CA_Anime_N = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 90), Cells(ligne, Pointeur_Rayon + 90)))
+        QV_Anime_N = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 120), Cells(ligne, Pointeur_Rayon + 120)))
+        PDV_Anime_N = Application.WorksheetFunction.Subtotal(4, Range(Cells(1, Pointeur_Rayon + 150), Cells(ligne, Pointeur_Rayon + 150)))
+        
+        If SelecteurD <> "" And SelecteurF <> "" Then
+            With Sheets("SIDE")
+                .[A7].AutoFilter
+                .[A7].AutoFilter Field:=6, Criteria1:=">=" & Format("01/" & Mois_D & "/" & AnnÈe_D - 1, "mm/dd/yyyy"), Operator:=xlAnd, Criteria2:="<" & Format("01/" & Mois_F + 1 & "/" & AnnÈe_F - 1, "mm/dd/yyyy")
+            End With
+        ElseIf AnnÈe_Menu <> 0 Then: Sheets("SIDE").[A7].AutoFilter: Sheets("SIDE").[A7].AutoFilter Field:=3, Criteria1:=AnnÈe - 1
+        ElseIf Mois_Menu <> "" Then
+            Sheets("SIDE").[A7].AutoFilter
+            Sheets("SIDE").[A7].AutoFilter Field:=3, Criteria1:=AnnÈe - 1
+            Sheets("SIDE").[A7].AutoFilter Field:=4, Criteria1:=Mois
+        
+        ElseIf Semaine_Menu <> "" Then
+            Sheets("SIDE").[A7].AutoFilter
+            Sheets("SIDE").[A7].AutoFilter Field:=3, Criteria1:=AnnÈe - 1
+            Sheets("SIDE").[A7].AutoFilter Field:=5, Criteria1:=Semaine
+        ElseIf Date_Deb_A <> "" And Date_Fin_A <> "" And Date_Deb_A_1 <> "" And Date_Fin_A_1 <> "" Then
+            Sheets("SIDE").[A7].AutoFilter
+            Sheets("SIDE").[A7].AutoFilter Field:=6, Criteria1:=">=" & Format(Date_Deb_A_1, "mm/dd/yyyy"), Operator:=xlAnd, Criteria2:="<=" & Format(Date_Fin_A_1, "mm/dd/yyyy")
+        End If
+        
+        CA_N_1 = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon), Cells(ligne, Pointeur_Rayon)))
+        QV_N_1 = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 30), Cells(ligne, Pointeur_Rayon + 30)))
+        PDV_N_1 = Application.WorksheetFunction.Subtotal(1, Range(Cells(1, Pointeur_Rayon + 60), Cells(ligne, Pointeur_Rayon + 60)))
+        Panier_N_1 = Application.WorksheetFunction.Subtotal(4, Range(Cells(1, Pointeur_Rayon + 180), Cells(ligne, Pointeur_Rayon + 180)))
+        Passage_N_1 = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 210), Cells(ligne, Pointeur_Rayon + 210)))
+        CA_Anime_N_1 = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 90), Cells(ligne, Pointeur_Rayon + 90)))
+        QV_Anime_N_1 = Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 120), Cells(ligne, Pointeur_Rayon + 120)))
+        If Application.WorksheetFunction.Subtotal(2, Range(Cells(1, Pointeur_Rayon + 150), Cells(ligne, Pointeur_Rayon + 150))) = 0 Then
+        PDV_Anime_N_1 = 0
+        Else: PDV_Anime_N_1 = Application.WorksheetFunction.Subtotal(1, Range(Cells(1, Pointeur_Rayon + 150), Cells(ligne, Pointeur_Rayon + 150))): End If
+        
+        Evol_CA_Eur = CA_N - CA_N_1
+        Evol_CA_Per = (CA_N / CA_N_1) - 1
+        Evol_QV_UVC = QV_N - QV_N_1
+        Evol_QV_Per = (QV_N / QV_N_1) - 1
+        Evol_CA_Anime_Eur = CA_Anime_N - CA_Anime_N_1
+        If CA_Anime_N_1 <> 0 Then: Evol_CA_Anime_Per = (CA_Anime_N / CA_Anime_N_1) - 1
+        Evol_QV_Anime_Eur = QV_Anime_N - QV_Anime_N_1
+        If QV_Anime_N_1 <> 0 Then: Evol_QV_Anime_Per = (QV_Anime_N / QV_Anime_N_1) - 1
+        
+        PMU_N = CA_N / QV_N
+        PMU_N_1 = CA_N_1 / QV_N_1
+        Evol_PMU_Eur = PMU_N - PMU_N_1
+        Evol_PMU_Per = (PMU_N / PMU_N_1) - 1
+        
+        Evol_PDV_PDV = PDV_N - PDV_N_1
+        Evol_PDV_Per = (PDV_N / PDV_N_1) - 1
+        Evol_PDV_Anime_PDV = PDV_Anime_N - PDV_Anime_N_1
+        If PDV_Anime_N_1 <> 0 Then: Evol_PDV_Anime_Per = (PDV_Anime_N / PDV_Anime_N_1) - 1
+        CA_PDV_N = CA_N / PDV_N
+        CA_PDV_N_1 = CA_N_1 / PDV_N_1
+        Evol_CA_PDV_Per = (CA_PDV_N / CA_PDV_N_1) - 1
+        If PDV_Anime_N <> 0 Then: CA_Anime_PDV_N = CA_Anime_N / PDV_Anime_N
+        If PDV_Anime_N_1 <> 0 Then: CA_Anime_PDV_N_1 = CA_Anime_N_1 / PDV_Anime_N_1
+        If CA_Anime_PDV_N_1 <> 0 Then: Evol_CA_Anime_PDV_Per = (CA_Anime_PDV_N / CA_Anime_PDV_N_1) - 1
+
+        Evol_Panier_Eur = Panier_N - Panier_N_1
+        Evol_Panier_Per = (Panier_N / Panier_N_1) - 1
+        
+        Evol_Passage_Passage = Passage_N - Passage_N_1
+        Evol_Passage_Per = (Passage_N / Passage_N_1) - 1
+        
+        Part_CA_Anime_N = CA_Anime_N / CA_N
+        Part_CA_Anime_N_1 = CA_Anime_N_1 / CA_N_1
+    
+        Select Case Cat
+            Case "1_VETEMENT LAYETTE": Ligne_Ecriture = 8
+            Case "2_VETEMENT ENFANT": Ligne_Ecriture = 9
+            Case "3_VETEMENT FEMME": Ligne_Ecriture = 10
+            Case "4_VETEMENT HOMME": Ligne_Ecriture = 11
+            Case "6_NUIT ENFANT": Ligne_Ecriture = 12
+            Case "7_NUIT FEMME": Ligne_Ecriture = 13
+            Case "8_NUIT HOMME": Ligne_Ecriture = 14
+            Case "9_BAIN BEBE": Ligne_Ecriture = 15
+            Case "10_BAIN ENFANT": Ligne_Ecriture = 16
+            Case "11_BAIN FEMME": Ligne_Ecriture = 17
+            Case "12_BAIN HOMME": Ligne_Ecriture = 18
+            Case "13_S.VETEMENT LAYETTE": Ligne_Ecriture = 20
+            Case "14_S.VETEMENT ENFANT": Ligne_Ecriture = 21
+            Case "15_S.VETEMENT FEMME": Ligne_Ecriture = 23
+            Case "16_S.VETEMENT HOMME": Ligne_Ecriture = 24
+            Case "17_CHAUSSETTES BEBE": Ligne_Ecriture = 25
+            Case "18_CHAUSSETTES ENFANT": Ligne_Ecriture = 26
+            Case "19_CHAUSSETTES FEMME": Ligne_Ecriture = 27
+            Case "20_CHAUSSETTE HOMME": Ligne_Ecriture = 28
+            Case "22_COLLANTS": Ligne_Ecriture = 30
+            Case "23_MERCERIE": Ligne_Ecriture = 31
+            Case "24_SEMELLE LACETS": Ligne_Ecriture = 32
+            Case "25_LINGE DE MAISON AUTRES": Ligne_Ecriture = 34
+            Case "26_LINGE DE MAISON GB": Ligne_Ecriture = 35
+            Case "27_PETITE PUERICULTURE": Ligne_Ecriture = 37
+            Case "28_GROSSE PUERICULTURE": Ligne_Ecriture = 38
+            Case "29_ACCESSOIRES": Ligne_Ecriture = 40
+            Case "30_CHAUSSURE EXTERIEUR": Ligne_Ecriture = 41
+            Case "31_CHAUSSURE INTERIEUR": Ligne_Ecriture = 42
+            Case "32_BIJOUTERIE": Ligne_Ecriture = 44
+        End Select
+        
+        Sheets("TDB").Activate
+        Sheets("TDB").Cells(Ligne_Ecriture, 2) = CA_N_1
+        Sheets("TDB").Cells(Ligne_Ecriture, 3) = CA_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 4) = Evol_CA_Eur
+        Sheets("TDB").Cells(Ligne_Ecriture, 5) = Evol_CA_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 7) = QV_N_1
+        Sheets("TDB").Cells(Ligne_Ecriture, 8) = QV_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 9) = Evol_QV_UVC
+        Sheets("TDB").Cells(Ligne_Ecriture, 10) = Evol_QV_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 11) = PMU_N_1
+        Sheets("TDB").Cells(Ligne_Ecriture, 12) = PMU_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 13) = Evol_PMU_Eur
+        Sheets("TDB").Cells(Ligne_Ecriture, 14) = Evol_PMU_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 22) = PDV_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 23) = Evol_PDV_PDV
+        Sheets("TDB").Cells(Ligne_Ecriture, 24) = Evol_PDV_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 25) = CA_PDV_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 26) = Evol_CA_PDV_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 27) = Panier_N_1
+        Sheets("TDB").Cells(Ligne_Ecriture, 28) = Panier_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 29) = Evol_Panier_Eur
+        Sheets("TDB").Cells(Ligne_Ecriture, 30) = Evol_Panier_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 31) = Passage_N_1
+        Sheets("TDB").Cells(Ligne_Ecriture, 32) = Passage_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 33) = Evol_Passage_Passage
+        Sheets("TDB").Cells(Ligne_Ecriture, 34) = Evol_Passage_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 35) = CA_Anime_N_1
+        Sheets("TDB").Cells(Ligne_Ecriture, 36) = CA_Anime_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 37) = Evol_CA_Anime_Eur
+        Sheets("TDB").Cells(Ligne_Ecriture, 38) = Evol_CA_Anime_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 39) = Part_CA_Anime_N_1
+        Sheets("TDB").Cells(Ligne_Ecriture, 40) = Part_CA_Anime_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 41) = QV_Anime_N_1
+        Sheets("TDB").Cells(Ligne_Ecriture, 42) = QV_Anime_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 43) = Evol_QV_Anime_Eur
+        Sheets("TDB").Cells(Ligne_Ecriture, 44) = Evol_QV_Anime_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 45) = PDV_Anime_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 46) = Evol_PDV_Anime_PDV
+        Sheets("TDB").Cells(Ligne_Ecriture, 47) = Evol_PDV_Anime_Per
+        Sheets("TDB").Cells(Ligne_Ecriture, 48) = CA_Anime_PDV_N
+        Sheets("TDB").Cells(Ligne_Ecriture, 49) = Evol_CA_Anime_PDV_Per
+        Sheets("SIDE").Activate
+    
+        Sheets("SIDE").[A7].AutoFilter
+Next Pointeur_Rayon
+Sheets("TDB").Activate
+End Sub
+
+Sub FILTRE_IRI()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim Cat As String
+Dim Pointeur_Rayon As Integer, Ligne_Ecriture As Integer
+Dim CA_GSA_N As Double, CA_GSA_N_1 As Double, Evol_CA_GSA_Per As Double
+Dim PMU_GSA_N As Double, PMU_GSA_N_1 As Double, Evol_PMU_GSA_Eur As Double, Evol_PMU_GSA_Per As Double
+Dim PDM_U_N As Double, PDM_U_N_1 As Double, Evol_PDM_U_Pts As Double
+Dim AnnÈe_Menu As Integer, Mois_Menu As String, Semaine_Menu As String
+Dim Mois As Integer, AnnÈe As Integer, Semaine As Integer, Mois_D As Integer, AnnÈe_D As Integer, Mois_F As Integer, AnnÈe_F As Integer, jour_F
+Dim ligne As Long
+Dim SelecteurD As String, Date_Debut As Date
+Dim SelecteurF As String, Date_Fin As Date
+Dim Date_D As String, Date_F As String
+
+Sheets("IRI").Activate
+Sheets("IRI").[A8].AutoFilter
+ligne = Sheets("IRI").Range("D100000").End(xlUp).Row
+
+Cat = ""
+Mois_Menu = ""
+Semaine_Menu = ""
+AnnÈe = 0
+
+AnnÈe_Menu = Sheets("TDB").Cells(1, 2)
+Mois_Menu = Sheets("TDB").Cells(2, 2)
+Semaine_Menu = Sheets("TDB").Cells(3, 2)
+
+SelecteurD = Sheets("TDB").Cells(2, 7)
+SelecteurF = Sheets("TDB").Cells(2, 8)
+
+Date_D = Sheets("TDB").Cells(2, 11)
+Date_F = Sheets("TDB").Cells(2, 12)
+
+If SelecteurD <> "" And SelecteurF <> "" Then
+        Select Case SelecteurD
+            Case "2015 - Janvier": Date_Debut = DateSerial(2015, 1, 1): Mois_D = 1: AnnÈe_D = 2015
+            Case "2015 - FÈvrier": Date_Debut = DateSerial(2015, 2, 1): Mois_D = 2: AnnÈe_D = 2015
+            Case "2015 - Mars": Date_Debut = DateSerial(2015, 3, 1): Mois_D = 3: AnnÈe_D = 2015
+            Case "2015 - Avril": Date_Debut = DateSerial(2015, 4, 1): Mois_D = 4: AnnÈe_D = 2015
+            Case "2015 - Mai": Date_Debut = DateSerial(2015, 5, 1): Mois_D = 5: AnnÈe_D = 2015
+            Case "2015 - Juin": Date_Debut = DateSerial(2015, 6, 1): Mois_D = 6: AnnÈe_D = 2015
+            Case "2015 - Juillet": Date_Debut = DateSerial(2015, 7, 1): Mois_D = 7: AnnÈe_D = 2015
+            Case "2015 - Ao˚t": Date_Debut = DateSerial(2015, 8, 1): Mois_D = 8: AnnÈe_D = 2015
+            Case "2015 - Septembre": Date_Debut = DateSerial(2015, 9, 1): Mois_D = 9: AnnÈe_D = 2015
+            Case "2015 - Octobre": Date_Debut = DateSerial(2015, 10, 1): Mois_D = 10: AnnÈe_D = 2015
+            Case "2015 - Novembre": Date_Debut = DateSerial(2015, 11, 1): Mois_D = 11: AnnÈe_D = 2015
+            Case "2015 - DÈcembre": Date_Debut = DateSerial(2015, 12, 1): Mois_D = 12: AnnÈe_D = 2015
+            Case "2016 - Janvier": Date_Debut = DateSerial(2016, 1, 1): Mois_D = 1: AnnÈe_D = 2016
+            Case "2016 - FÈvrier": Date_Debut = DateSerial(2016, 2, 1): Mois_D = 2: AnnÈe_D = 2016
+            Case "2016 - Mars": Date_Debut = DateSerial(2016, 3, 1): Mois_D = 3: AnnÈe_D = 2016
+            Case "2016 - Avril": Date_Debut = DateSerial(2016, 4, 1): Mois_D = 4: AnnÈe_D = 2016
+            Case "2016 - Mai": Date_Debut = DateSerial(2016, 5, 1): Mois_D = 5: AnnÈe_D = 2016
+            Case "2016 - Juin": Date_Debut = DateSerial(2016, 6, 1): Mois_D = 6: AnnÈe_D = 2016
+            Case "2016 - Juillet": Date_Debut = DateSerial(2016, 7, 1): Mois_D = 7: AnnÈe_D = 2016
+            Case "2016 - Ao˚t": Date_Debut = DateSerial(2016, 8, 1): Mois_D = 8: AnnÈe_D = 2016
+            Case "2016 - Septembre": Date_Debut = DateSerial(2016, 9, 1): Mois_D = 9: AnnÈe_D = 2016
+            Case "2016 - Octobre": Date_Debut = DateSerial(2016, 10, 1): Mois_D = 10: AnnÈe_D = 2016
+            Case "2016 - Novembre": Date_Debut = DateSerial(2016, 11, 1): Mois_D = 11: AnnÈe_D = 2016
+            Case "2016 - DÈcembre": Date_Debut = DateSerial(2016, 12, 1): Mois_D = 12: AnnÈe_D = 2016
+            Case "2017 - Janvier": Date_Debut = DateSerial(2017, 1, 1): Mois_D = 1: AnnÈe_D = 2017
+            Case "2017 - FÈvrier": Date_Debut = DateSerial(2017, 2, 1): Mois_D = 2: AnnÈe_D = 2017
+            Case "2017 - Mars": Date_Debut = DateSerial(2017, 3, 1): Mois_D = 3: AnnÈe_D = 2017
+            Case "2017 - Avril": Date_Debut = DateSerial(2017, 4, 1): Mois_D = 4: AnnÈe_D = 2017
+            Case "2017 - Mai": Date_Debut = DateSerial(2017, 5, 1): Mois_D = 5: AnnÈe_D = 2017
+            Case "2017 - Juin": Date_Debut = DateSerial(2017, 6, 1): Mois_D = 6: AnnÈe_D = 2017
+            Case "2017 - Juillet": Date_Debut = DateSerial(2017, 7, 1): Mois_D = 7: AnnÈe_D = 2017
+            Case "2017 - Ao˚t": Date_Debut = DateSerial(2017, 8, 1): Mois_D = 8: AnnÈe_D = 2017
+            Case "2017 - Septembre": Date_Debut = DateSerial(2017, 9, 1): Mois_D = 9: AnnÈe_D = 2017
+            Case "2017 - Octobre": Date_Debut = DateSerial(2017, 10, 1): Mois_D = 10: AnnÈe_D = 2017
+            Case "2017 - Novembre": Date_Debut = DateSerial(2017, 11, 1): Mois_D = 11: AnnÈe_D = 2017
+            Case "2017 - DÈcembre": Date_Debut = DateSerial(2017, 12, 1): Mois_D = 12: AnnÈe_D = 2017
+        End Select
+        
+        Select Case SelecteurF
+            Case "2015 - Janvier": Date_Fin = DateSerial(2015, 2, 1): Mois_F = 1: AnnÈe_F = 2015
+            Case "2015 - FÈvrier": Date_Fin = DateSerial(2015, 3, 1): Mois_F = 2: AnnÈe_F = 2015
+            Case "2015 - Mars": Date_Fin = DateSerial(2015, 4, 1): Mois_F = 3: AnnÈe_F = 2015
+            Case "2015 - Avril": Date_Fin = DateSerial(2015, 5, 1): Mois_F = 4: AnnÈe_F = 2015
+            Case "2015 - Mai": Date_Fin = DateSerial(2015, 6, 1): Mois_F = 5: AnnÈe_F = 2015
+            Case "2015 - Juin": Date_Fin = DateSerial(2015, 7, 1): Mois_F = 6: AnnÈe_F = 2015
+            Case "2015 - Juillet": Date_Fin = DateSerial(2015, 8, 1): Mois_F = 7: AnnÈe_F = 2015
+            Case "2015 - Ao˚t": Date_Fin = DateSerial(2015, 9, 1): Mois_F = 8: AnnÈe_F = 2015
+            Case "2015 - Septembre": Date_Fin = DateSerial(2015, 10, 1): Mois_F = 9: AnnÈe_F = 2015
+            Case "2015 - Octobre": Date_Fin = DateSerial(2015, 11, 1): Mois_F = 10: AnnÈe_F = 2015
+            Case "2015 - Novembre": Date_Fin = DateSerial(2015, 12, 1): Mois_F = 11: AnnÈe_F = 2015
+            Case "2015 - DÈcembre": Date_Fin = DateSerial(2016, 1, 1): Mois_F = 12: AnnÈe_F = 2015
+            Case "2016 - Janvier": Date_Fin = DateSerial(2016, 2, 1): Mois_F = 1: AnnÈe_F = 2016
+            Case "2016 - FÈvrier": Date_Fin = DateSerial(2016, 3, 1): Mois_F = 2: AnnÈe_F = 2016
+            Case "2016 - Mars": Date_Fin = DateSerial(2016, 4, 1): Mois_F = 3: AnnÈe_F = 2016
+            Case "2016 - Avril": Date_Fin = DateSerial(2016, 5, 1): Mois_F = 4: AnnÈe_F = 2016
+            Case "2016 - Mai": Date_Fin = DateSerial(2016, 6, 1): Mois_F = 5: AnnÈe_F = 2016
+            Case "2016 - Juin": Date_Fin = DateSerial(2016, 7, 1): Mois_F = 6: AnnÈe_F = 2016
+            Case "2016 - Juillet": Date_Fin = DateSerial(2016, 8, 1): Mois_F = 7: AnnÈe_F = 2016
+            Case "2016 - Ao˚t": Date_Fin = DateSerial(2016, 9, 1): Mois_F = 8: AnnÈe_F = 2016
+            Case "2016 - Septembre": Date_Fin = DateSerial(2016, 10, 1): Mois_F = 9: AnnÈe_F = 2016
+            Case "2016 - Octobre": Date_Fin = DateSerial(2016, 11, 1): Mois_F = 10: AnnÈe_F = 2016
+            Case "2016 - Novembre": Date_Fin = DateSerial(2016, 12, 1): Mois_F = 11: AnnÈe_F = 2016
+            Case "2016 - DÈcembre": Date_Fin = DateSerial(2017, 1, 1): Mois_F = 12: AnnÈe_F = 2016
+            Case "2017 - Janvier": Date_Fin = DateSerial(2017, 2, 1): Mois_F = 1: AnnÈe_F = 2017
+            Case "2017 - FÈvrier": Date_Fin = DateSerial(2017, 3, 1): Mois_F = 2: AnnÈe_F = 2017
+            Case "2017 - Mars": Date_Fin = DateSerial(2017, 4, 1): Mois_F = 3: AnnÈe_F = 2017
+            Case "2017 - Avril": Date_Fin = DateSerial(2017, 5, 1): Mois_F = 4: AnnÈe_F = 2017
+            Case "2017 - Mai": Date_Fin = DateSerial(2017, 6, 1): Mois_F = 5: AnnÈe_F = 2017
+            Case "2017 - Juin": Date_Fin = DateSerial(2017, 7, 1): Mois_F = 6: AnnÈe_F = 2017
+            Case "2017 - Juillet": Date_Fin = DateSerial(2017, 8, 1): Mois_F = 7: AnnÈe_F = 2017
+            Case "2017 - Ao˚t": Date_Fin = DateSerial(2017, 9, 1): Mois_F = 8: AnnÈe_F = 2017
+            Case "2017 - Septembre": Date_Fin = DateSerial(2017, 10, 1): Mois_F = 9: AnnÈe_F = 2017
+            Case "2017 - Octobre": Date_Fin = DateSerial(2017, 11, 1): Mois_F = 10: AnnÈe_F = 2017
+            Case "2017 - Novembre": Date_Fin = DateSerial(2017, 12, 1): Mois_F = 11: AnnÈe_F = 2017
+            Case "2017 - DÈcembre": Date_Fin = DateSerial(2018, 1, 1): Mois_F = 12: AnnÈe_F = 2017
+        End Select
+        Sheets("IRI").[A8].AutoFilter: Sheets("IRI").[A8].AutoFilter Field:=1, Criteria1:=">=" & Format(Date_Debut, "mm/dd/yyyy"), Operator:=xlAnd, Criteria2:="<" & Format(Date_Fin, "mm/dd/yyyy")
+        ElseIf AnnÈe_Menu <> 0 Then: AnnÈe = AnnÈe_Menu: Sheets("IRI").[A8].AutoFilter: Sheets("IRI").[A8].AutoFilter Field:=2, Criteria1:=AnnÈe
+        ElseIf Mois_Menu <> "" Then
+        Select Case Mois_Menu
+            Case "2015 - Janvier": Date_Debut = DateSerial(2015, 1, 1): Mois = 1: AnnÈe = 2015
+            Case "2015 - FÈvrier": Date_Debut = DateSerial(2015, 2, 1): Mois = 2: AnnÈe = 2015
+            Case "2015 - Mars": Date_Debut = DateSerial(2015, 3, 1): Mois = 3: AnnÈe = 2015
+            Case "2015 - Avril": Date_Debut = DateSerial(2015, 4, 1): Mois = 4: AnnÈe = 2015
+            Case "2015 - Mai": Date_Debut = DateSerial(2015, 5, 1): Mois = 5: AnnÈe = 2015
+            Case "2015 - Juin": Date_Debut = DateSerial(2015, 6, 1): Mois = 6: AnnÈe = 2015
+            Case "2015 - Juillet": Date_Debut = DateSerial(2015, 7, 1): Mois = 7: AnnÈe = 2015
+            Case "2015 - Ao˚t": Date_Debut = DateSerial(2015, 8, 1): Mois = 8: AnnÈe = 2015
+            Case "2015 - Septembre": Date_Debut = DateSerial(2015, 9, 1): Mois = 9: AnnÈe = 2015
+            Case "2015 - Octobre": Date_Debut = DateSerial(2015, 10, 1): Mois = 10: AnnÈe = 2015
+            Case "2015 - Novembre": Date_Debut = DateSerial(2015, 11, 1): Mois = 11: AnnÈe = 2015
+            Case "2015 - DÈcembre": Date_Debut = DateSerial(2015, 12, 1): Mois = 12: AnnÈe = 2015
+            Case "2016 - Janvier": Date_Debut = DateSerial(2016, 1, 1): Mois = 1: AnnÈe = 2016
+            Case "2016 - FÈvrier": Date_Debut = DateSerial(2016, 2, 1): Mois = 2: AnnÈe = 2016
+            Case "2016 - Mars": Date_Debut = DateSerial(2016, 3, 1): Mois = 3: AnnÈe = 2016
+            Case "2016 - Avril": Date_Debut = DateSerial(2016, 4, 1): Mois = 4: AnnÈe = 2016
+            Case "2016 - Mai": Date_Debut = DateSerial(2016, 5, 1): Mois = 5: AnnÈe = 2016
+            Case "2016 - Juin": Date_Debut = DateSerial(2016, 6, 1): Mois = 6: AnnÈe = 2016
+            Case "2016 - Juillet": Date_Debut = DateSerial(2016, 7, 1): Mois = 7: AnnÈe = 2016
+            Case "2016 - Ao˚t": Date_Debut = DateSerial(2016, 8, 1): Mois = 8: AnnÈe = 2016
+            Case "2016 - Septembre": Date_Debut = DateSerial(2016, 9, 1): Mois = 9: AnnÈe = 2016
+            Case "2016 - Octobre": Date_Debut = DateSerial(2016, 10, 1): Mois = 10: AnnÈe = 2016
+            Case "2016 - Novembre": Date_Debut = DateSerial(2016, 11, 1): Mois = 11: AnnÈe = 2016
+            Case "2016 - DÈcembre": Date_Debut = DateSerial(2016, 12, 1): Mois = 12: AnnÈe = 2016
+            Case "2017 - Janvier": Date_Debut = DateSerial(2017, 1, 1): Mois = 1: AnnÈe = 2017
+            Case "2017 - FÈvrier": Date_Debut = DateSerial(2017, 2, 1): Mois = 2: AnnÈe = 2017
+            Case "2017 - Mars": Date_Debut = DateSerial(2017, 3, 1): Mois = 3: AnnÈe = 2017
+            Case "2017 - Avril": Date_Debut = DateSerial(2017, 4, 1): Mois = 4: AnnÈe = 2017
+            Case "2017 - Mai": Date_Debut = DateSerial(2017, 5, 1): Mois = 5: AnnÈe = 2017
+            Case "2017 - Juin": Date_Debut = DateSerial(2017, 6, 1): Mois = 6: AnnÈe = 2017
+            Case "2017 - Juillet": Date_Debut = DateSerial(2017, 7, 1): Mois = 7: AnnÈe = 2017
+            Case "2017 - Ao˚t": Date_Debut = DateSerial(2017, 8, 1): Mois = 8: AnnÈe = 2017
+            Case "2017 - Septembre": Date_Debut = DateSerial(2017, 9, 1): Mois = 9: AnnÈe = 2017
+            Case "2017 - Octobre": Date_Debut = DateSerial(2017, 10, 1): Mois = 10: AnnÈe = 2017
+            Case "2017 - Novembre": Date_Debut = DateSerial(2017, 11, 1): Mois = 11: AnnÈe = 2017
+            Case "2017 - DÈcembre": Date_Debut = DateSerial(2017, 12, 1): Mois = 12: AnnÈe = 2017
+        End Select
+        Sheets("IRI").[A8].AutoFilter: Sheets("IRI").[A8].AutoFilter Field:=3, Criteria1:=Mois: Sheets("IRI").[A8].AutoFilter Field:=2, Criteria1:=AnnÈe
+    ElseIf Semaine_Menu <> "" Then
+    Select Case Semaine_Menu
+        Case "2017 - S1": Semaine = 1: AnnÈe = 2017
+        Case "2017 - S2": Semaine = 2: AnnÈe = 2017
+        Case "2017 - S3": Semaine = 3: AnnÈe = 2017
+        Case "2017 - S4": Semaine = 4: AnnÈe = 2017
+        Case "2017 - S5": Semaine = 5: AnnÈe = 2017
+        Case "2017 - S6": Semaine = 6: AnnÈe = 2017
+        Case "2017 - S7": Semaine = 7: AnnÈe = 2017
+        Case "2017 - S8": Semaine = 8: AnnÈe = 2017
+        Case "2017 - S9": Semaine = 9: AnnÈe = 2017
+        Case "2017 - S10": Semaine = 10: AnnÈe = 2017
+        Case "2017 - S11": Semaine = 11: AnnÈe = 2017
+        Case "2017 - S12": Semaine = 12: AnnÈe = 2017
+        Case "2017 - S13": Semaine = 13: AnnÈe = 2017
+        Case "2017 - S14": Semaine = 14: AnnÈe = 2017
+        Case "2017 - S15": Semaine = 15: AnnÈe = 2017
+        Case "2017 - S16": Semaine = 16: AnnÈe = 2017
+        Case "2017 - S17": Semaine = 17: AnnÈe = 2017
+        Case "2017 - S18": Semaine = 18: AnnÈe = 2017
+        Case "2017 - S19": Semaine = 19: AnnÈe = 2017
+        Case "2017 - S20": Semaine = 20: AnnÈe = 2017
+        Case "2017 - S21": Semaine = 21: AnnÈe = 2017
+        Case "2017 - S22": Semaine = 22: AnnÈe = 2017
+        Case "2017 - S23": Semaine = 23: AnnÈe = 2017
+        Case "2017 - S24": Semaine = 24: AnnÈe = 2017
+        Case "2017 - S25": Semaine = 25: AnnÈe = 2017
+        Case "2017 - S26": Semaine = 26: AnnÈe = 2017
+        Case "2017 - S27": Semaine = 27: AnnÈe = 2017
+        Case "2017 - S28": Semaine = 28: AnnÈe = 2017
+        Case "2017 - S29": Semaine = 29: AnnÈe = 2017
+        Case "2017 - S30": Semaine = 30: AnnÈe = 2017
+        Case "2017 - S31": Semaine = 31: AnnÈe = 2017
+        Case "2017 - S32": Semaine = 32: AnnÈe = 2017
+        Case "2017 - S33": Semaine = 33: AnnÈe = 2017
+        Case "2017 - S34": Semaine = 34: AnnÈe = 2017
+        
+    End Select
+    
+    Sheets("IRI").[A8].AutoFilter: Sheets("IRI").[A8].AutoFilter Field:=2, Criteria1:=AnnÈe: Sheets("IRI").[A8].AutoFilter Field:=4, Criteria1:=Semaine
+    ElseIf Date_D <> "" And Date_F <> "" Then: Sheets("IRI").[A8].AutoFilter: Sheets("IRI").[A8].AutoFilter Field:=1, Criteria1:=">=" & Format(Date_D, "mm/dd/yyyy"), Operator:=xlAnd, Criteria2:="<=" & Format(Date_F, "mm/dd/yyyy")
+End If
+
+For Pointeur_Rayon = 6 To 74
+    CA_GSA_N = 0: CA_GSA_N_1 = 0: Evol_CA_GSA_Per = 0: PMU_GSA_N = 0: PMU_GSA_N_1 = 0: Evol_PMU_GSA_Eur = 0: Evol_PMU_GSA_Per = 0: PDM_U_N = 0: PDM_U_N_1 = 0: Evol_PDM_U_Pts = 0
+    
+    Sheets("IRI").Activate
+    Cat = Sheets("IRI").Cells(7, Pointeur_Rayon)
+    Ligne_Ecriture = 0
+    
+    Select Case Cat
+        Case "BAS ET COLLANTS": Ligne_Ecriture = 30
+        Case "CHAUSSETTES": Ligne_Ecriture = 29
+        Case "CONFECTION 0-3 ANS": Ligne_Ecriture = 8
+        Case "CONFECTION ENFANT": Ligne_Ecriture = 9
+        Case "CONFECTION FEMME": Ligne_Ecriture = 10
+        Case "CONFECTION HOMME": Ligne_Ecriture = 11
+        Case "LINGE DE MAISON": Ligne_Ecriture = 36
+        Case "SOUS VETEMENT ENFANTS": Ligne_Ecriture = 22
+        Case "SOUS VETEMENT FEMME": Ligne_Ecriture = 23
+        Case "SOUS VETEMENT HOMME": Ligne_Ecriture = 24
+        Case "TEXTILE DE NUIT ENFANTS": Ligne_Ecriture = 12
+        Case "TEXTILE DE NUIT FEMME": Ligne_Ecriture = 13
+        Case "TEXTILE DE NUIT HOMME": Ligne_Ecriture = 14
+        Case "CHAUSSURES": Ligne_Ecriture = 43
+        Case "PUERICULTURE": Ligne_Ecriture = 39
+        Case "TOTAL TEXTILE": Ligne_Ecriture = 46
+        Case "ACCESSOIRES TEXTILE": Ligne_Ecriture = 40
+        Case "MERCERIE": Ligne_Ecriture = 31
+    End Select
+    
+    CA_GSA_N = Application.WorksheetFunction.Subtotal(9, Range(Cells(6, Pointeur_Rayon + 1), Cells(ligne, Pointeur_Rayon + 1)))
+    CA_GSA_N_1 = Application.WorksheetFunction.Subtotal(9, Range(Cells(6, Pointeur_Rayon), Cells(ligne, Pointeur_Rayon)))
+    Evol_CA_GSA_Per = (CA_GSA_N / CA_GSA_N_1) - 1
+    
+    PMU_GSA_N = Application.WorksheetFunction.Subtotal(1, Range(Cells(6, Pointeur_Rayon + 3), Cells(ligne, Pointeur_Rayon + 3)))
+    PMU_GSA_N_1 = Application.WorksheetFunction.Subtotal(1, Range(Cells(6, Pointeur_Rayon + 2), Cells(ligne, Pointeur_Rayon + 2)))
+    Evol_PMU_GSA_Eur = PMU_GSA_N - PMU_GSA_N_1
+    Evol_PMU_GSA_Per = (PMU_GSA_N / PMU_GSA_N_1) - 1
+    
+    PDM_U_N = Application.WorksheetFunction.Subtotal(9, Range(Cells(6, Pointeur_Rayon + 73), Cells(ligne, Pointeur_Rayon + 73))) / Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon + 1), Cells(ligne, Pointeur_Rayon + 1)))
+    PDM_U_N_1 = Application.WorksheetFunction.Subtotal(9, Range(Cells(6, Pointeur_Rayon + 72), Cells(ligne, Pointeur_Rayon + 72))) / Application.WorksheetFunction.Subtotal(9, Range(Cells(1, Pointeur_Rayon), Cells(ligne, Pointeur_Rayon)))
+    Evol_PDM_U_Pts = (PDM_U_N - PDM_U_N_1) * 100
+    
+    Sheets("TDB").Activate
+    Sheets("TDB").Cells(Ligne_Ecriture, 6) = Evol_CA_GSA_Per
+    Sheets("TDB").Cells(Ligne_Ecriture, 15) = PMU_GSA_N_1
+    Sheets("TDB").Cells(Ligne_Ecriture, 16) = PMU_GSA_N
+    Sheets("TDB").Cells(Ligne_Ecriture, 17) = Evol_PMU_GSA_Eur
+    Sheets("TDB").Cells(Ligne_Ecriture, 18) = Evol_PMU_GSA_Per
+    Sheets("TDB").Cells(Ligne_Ecriture, 20) = PDM_U_N
+    Sheets("TDB").Cells(Ligne_Ecriture, 21) = Evol_PDM_U_Pts
+    Sheets("IRI").Activate
+    
+    Pointeur_Rayon = Pointeur_Rayon + 3
+Next Pointeur_Rayon
+Sheets("TDB").Activate
+
+End Sub
+
+Sub RT_BDD_A3D()
+
+Application.ScreenUpdating = False
+Application.DisplayAlerts = False
+
+Dim LigneW As Long, ColonneW As Long
+Dim EnTete As String
+Dim Annee_Debut_OP As Integer, Mois_Debut_OP As Integer, Nb_UB As Integer
+Dim Prix_Brut As Double, Prix_Virtuel As Double, Generosite As Double
+
+LigneW = 1
+ColonneW = 1
+
+Sheets("Lst Promos").Cells(11, 1) = "Lien"
+
+For I = 12 To Sheets("Lst Promos").Range("B50000").End(xlUp).Row
+    For J = 1 To Sheets("Lst Promos").Range("EE11").End(xlToLeft).Column
+        Sheets("Lst Promos").Activate
+        EnTete = Sheets("Lst Promos").Cells(11, J)
+        
+        Select Case EnTete
+            Case "Du...": Annee_Debut_OP = DatePart("yyyy", Sheets("Lst Promos").Cells(I, J)): Mois_Debut_OP = DatePart("m", Sheets("Lst Promos").Cells(I, J))
+                Sheets("BDD A3D").Cells(LigneW, ColonneW) = Annee_Debut_OP: ColonneW = ColonneW + 1
+                Sheets("BDD A3D").Cells(LigneW, ColonneW) = Annee_Debut_OP: ColonneW = ColonneW + 1
+                Sheets("BDD A3D").Cells(LigneW, ColonneW) = Sheets("Lst Promos").Cells(I, J)
+            Case "Conditionnement" And J = 15: Nb_UB = Left(Sheets("Lst Promos").Cells(I, J), 1): Sheets("BDD A3D").Cells(LigneW, ColonneW) = Nb_UB: Sheets("BDD A3D").Cells(1, ColonneW) = "Nombre d'UB": ColonneW = ColonneW + 1
+                Sheets("BDD A3D").Cells(LigneW, ColonneW) = Sheets("Lst Promos").Cells(I, J)
+            Case Else: Sheets("BDD A3D").Cells(LigneW, ColonneW) = Sheets("Lst Promos").Cells(I, J)
+            
+        End Select
+        
+        Sheets("BDD A3D").Cells(1, ColonneW) = EnTete
+        Sheets("BDD A3D").Activate
+        ColonneW = ColonneW + 1
+    Next J
+    LigneW = LigneW + 1
+Next I
+
+
+End Sub
+
